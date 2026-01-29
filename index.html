@@ -11,6 +11,11 @@
         .tab-inactive { color: #94a3b8; border-bottom: 4px solid transparent; opacity: 0.6; }
         .tab-active { border-bottom: 4px solid currentColor; opacity: 1; }
         .hidden { display: none; }
+        /* Card Flip Animation */
+        .card-inner { transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; position: relative; width: 100%; height: 100%; }
+        .card-flipped .card-inner { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 1.5rem; }
+        .card-back { transform: rotateY(180deg); }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -23,13 +28,13 @@
                 <button onclick="switchView('setup')" id="nav-setup" class="flex flex-col items-center flex-1 py-2 tab-active text-rose-500">
                     <span class="text-xs font-bold">ניהול</span>
                 </button>
-                <button onclick="switchView('cards')" id="nav-cards" class="flex flex-col items-center flex-1 py-2 tab-inactive text-blue-500">
+                <button onclick="switchView('cards')" id="nav-cards" class="flex flex-col items-center flex-1 py-2 tab-inactive text-blue-500 pointer-events-none opacity-20">
                     <span class="text-xs font-bold">הקנייה</span>
                 </button>
-                <button onclick="switchView('practice')" id="nav-practice" class="flex flex-col items-center flex-1 py-2 tab-inactive text-indigo-600">
+                <button onclick="switchView('practice')" id="nav-practice" class="flex flex-col items-center flex-1 py-2 tab-inactive text-indigo-600 pointer-events-none opacity-20">
                     <span class="text-xs font-bold">תרגול</span>
                 </button>
-                <button onclick="switchView('game')" id="nav-game" class="flex flex-col items-center flex-1 py-2 tab-inactive text-amber-500">
+                <button onclick="switchView('game')" id="nav-game" class="flex flex-col items-center flex-1 py-2 tab-inactive text-amber-500 pointer-events-none opacity-20">
                     <span class="text-xs font-bold">משחק</span>
                 </button>
             </nav>
@@ -43,44 +48,66 @@
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-rose-100">
                     <h2 class="text-lg font-bold mb-3 border-r-4 border-rose-500 pr-2">הוספת מילים</h2>
                     <div class="space-y-3">
-                        <input type="text" id="input-hebrew" placeholder="עברית (תפוח)" class="w-full p-3 border-2 rounded-xl text-center">
-                        <input type="text" id="input-english" placeholder="English (Apple)" dir="ltr" class="w-full p-3 border-2 rounded-xl text-center">
+                        <input type="text" id="input-hebrew" placeholder="עברית (תפוח)" class="w-full p-3 border-2 rounded-xl text-center focus:outline-rose-500">
+                        <input type="text" id="input-english" placeholder="English (Apple)" dir="ltr" class="w-full p-3 border-2 rounded-xl text-center focus:outline-rose-500">
                         <button onclick="addWord()" class="w-full bg-rose-500 text-white font-bold py-3 rounded-xl shadow-md active:scale-95 transition-transform">הוסף לרשימה</button>
                     </div>
                 </div>
                 
-                <div id="words-list" class="bg-white rounded-xl border border-slate-100 overflow-hidden">
-                    <!-- Words appear here -->
-                </div>
+                <div id="words-list" class="bg-white rounded-xl border border-slate-100 overflow-hidden"></div>
 
                 <div id="start-learning-btn" class="hidden text-center p-4">
-                    <button onclick="switchView('cards')" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg">התחל ללמוד</button>
+                    <button onclick="switchView('cards')" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg animate-bounce">התחל ללמוד</button>
                 </div>
             </section>
 
-            <!-- Other views placeholder -->
-            <section id="view-cards" class="hidden text-center space-y-6">
-                <div id="card-display" class="bg-white border-2 border-blue-100 aspect-[3/4] rounded-3xl shadow-xl flex flex-col items-center justify-center p-8">
-                    <button onclick="speakCurrent()" class="bg-blue-50 p-6 rounded-full mb-6">🔊</button>
-                    <h2 id="card-english" class="text-4xl font-black text-blue-900 mb-2" dir="ltr">Apple</h2>
-                    <p id="card-hebrew" class="text-2xl text-slate-500">תפוח</p>
+            <!-- Cards View -->
+            <section id="view-cards" class="hidden text-center space-y-4">
+                <div class="flex justify-between items-center mb-2 px-2">
+                    <span class="text-xs font-bold text-slate-400">התקדמות: <span id="progress-text">0/0</span></span>
+                    <div class="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-blue-500 w-0 transition-all"></div>
+                    </div>
                 </div>
-                <div class="flex gap-4">
-                    <button onclick="nextCard()" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold">המילה הבאה</button>
+
+                <div id="card-container" class="w-full aspect-[3/4] relative perspective-1000">
+                    <div class="card-inner" onclick="this.parentElement.classList.toggle('card-flipped')">
+                        <div class="card-face bg-white border-2 border-blue-100 shadow-xl p-8">
+                            <button onclick="event.stopPropagation(); speakCurrent();" class="bg-blue-50 p-6 rounded-full mb-6">🔊</button>
+                            <h2 id="card-english" class="text-4xl font-black text-blue-900" dir="ltr"></h2>
+                            <p class="mt-4 text-xs text-slate-400">לחץ להפיכה</p>
+                        </div>
+                        <div class="card-face card-back bg-blue-600 text-white border-2 border-blue-400 shadow-xl p-8">
+                            <h2 id="card-hebrew" class="text-4xl font-black"></h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 mt-6">
+                    <button onclick="markAsKnown(false)" class="flex-1 bg-white border-2 border-slate-200 text-slate-600 py-4 rounded-xl font-bold active:bg-slate-50">לא בטוח</button>
+                    <button onclick="markAsKnown(true)" class="flex-1 bg-green-500 text-white py-4 rounded-xl font-bold shadow-md active:bg-green-600">יודע!</button>
+                </div>
+                
+                <div class="flex justify-center gap-8 text-slate-400 mt-2">
+                    <button onclick="moveCard(-1)">⬅️</button>
+                    <span id="card-index">1/1</span>
+                    <button onclick="moveCard(1)">➡️</button>
                 </div>
             </section>
 
+            <!-- Practice Placeholder -->
             <section id="view-practice" class="hidden text-center py-10">
-                <div class="text-5xl mb-4">🏆</div>
-                <h2 class="text-2xl font-bold mb-4">כל הכבוד!</h2>
-                <p class="mb-8 text-slate-600">סיימת את שלב התרגול.</p>
-                <button onclick="switchView('game')" class="bg-amber-500 text-white w-full py-4 rounded-xl font-bold">לעבור למשחק</button>
+                <div class="text-6xl mb-4">✨</div>
+                <h2 class="text-2xl font-bold mb-4">הקנייה הושלמה!</h2>
+                <p class="mb-8 text-slate-600 px-6">עברת על כל המילים. עכשיו נראה מה אתה זוכר בתרגול.</p>
+                <button onclick="switchView('game')" class="bg-indigo-600 text-white w-full py-4 rounded-xl font-bold shadow-lg">מעבר לתרגול</button>
             </section>
 
+            <!-- Game View -->
             <section id="view-game" class="hidden text-center py-10">
-                <div class="text-5xl mb-4">🎮</div>
-                <h2 class="text-2xl font-bold mb-4">המשחק מוכן!</h2>
-                <button onclick="alert('כל הכבוד! צברת 100 נקודות!')" class="bg-amber-500 text-white w-full py-4 rounded-xl font-bold">התחל משחק</button>
+                <div class="text-6xl mb-4">🎮</div>
+                <h2 class="text-2xl font-bold mb-4 text-amber-600">המשחק פתוח!</h2>
+                <button onclick="alert('המשחק בטעינה...')" class="bg-amber-500 text-white w-full py-4 rounded-xl font-bold">שחק עכשיו</button>
             </section>
 
         </main>
@@ -88,17 +115,19 @@
 
     <script>
         let words = [];
-        let currentCardIdx = 0;
+        let knownWordsIds = new Set();
+        let currentIdx = 0;
 
         function addWord() {
             const heb = document.getElementById('input-hebrew').value.trim();
             const eng = document.getElementById('input-english').value.trim();
             
             if (heb && eng) {
-                words.push({ heb, eng, id: Date.now() });
+                words.push({ heb, eng, id: Date.now().toString() });
                 document.getElementById('input-hebrew').value = '';
                 document.getElementById('input-english').value = '';
                 renderWords();
+                updateNavState();
             }
         }
 
@@ -108,7 +137,7 @@
                 <div class="flex justify-between items-center p-4 border-b last:border-0">
                     <span class="font-bold">${w.heb}</span>
                     <span class="text-rose-600 font-bold" dir="ltr">${w.eng}</span>
-                    <button onclick="removeWord(${w.id})" class="text-slate-300">🗑️</button>
+                    <button onclick="removeWord('${w.id}')" class="text-slate-300">🗑️</button>
                 </div>
             `).join('');
             
@@ -117,42 +146,82 @@
 
         function removeWord(id) {
             words = words.filter(w => w.id !== id);
+            knownWordsIds.delete(id);
             renderWords();
+            updateNavState();
+        }
+
+        function updateNavState() {
+            const canLearn = words.length > 0;
+            const canPractice = words.length > 0 && knownWordsIds.size === words.length;
+            
+            toggleNav('nav-cards', canLearn);
+            toggleNav('nav-practice', canPractice);
+            toggleNav('nav-game', canPractice);
+        }
+
+        function toggleNav(id, enabled) {
+            const el = document.getElementById(id);
+            if (enabled) {
+                el.classList.remove('pointer-events-none', 'opacity-20');
+            } else {
+                el.classList.add('pointer-events-none', 'opacity-20');
+            }
         }
 
         function switchView(viewName) {
-            // Hide all views
             ['setup', 'cards', 'practice', 'game'].forEach(v => {
                 document.getElementById('view-' + v).classList.add('hidden');
                 document.getElementById('nav-' + v).classList.replace('tab-active', 'tab-inactive');
             });
 
-            // Show current view
             document.getElementById('view-' + viewName).classList.remove('hidden');
             document.getElementById('nav-' + viewName).classList.replace('tab-inactive', 'tab-active');
 
-            if (viewName === 'cards' && words.length > 0) {
-                updateCard();
-            }
+            if (viewName === 'cards') initCards();
         }
 
-        function updateCard() {
-            const word = words[currentCardIdx];
+        function initCards() {
+            currentIdx = 0;
+            updateCardUI();
+        }
+
+        function updateCardUI() {
+            const word = words[currentIdx];
+            document.getElementById('card-container').classList.remove('card-flipped');
             document.getElementById('card-english').textContent = word.eng;
             document.getElementById('card-hebrew').textContent = word.heb;
+            document.getElementById('card-index').textContent = `${currentIdx + 1} / ${words.length}`;
+            
+            const progress = (knownWordsIds.size / words.length) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = `${knownWordsIds.size}/${words.length}`;
         }
 
-        function nextCard() {
-            currentCardIdx = (currentCardIdx + 1) % words.length;
-            if (currentCardIdx === 0) {
-                switchView('practice');
+        function markAsKnown(known) {
+            const wordId = words[currentIdx].id;
+            if (known) {
+                knownWordsIds.add(wordId);
             } else {
-                updateCard();
+                knownWordsIds.delete(wordId);
             }
+            
+            updateNavState();
+
+            if (knownWordsIds.size === words.length) {
+                setTimeout(() => switchView('practice'), 300);
+            } else {
+                moveCard(1);
+            }
+        }
+
+        function moveCard(dir) {
+            currentIdx = (currentIdx + dir + words.length) % words.length;
+            updateCardUI();
         }
 
         function speakCurrent() {
-            const text = words[currentCardIdx].eng;
+            const text = words[currentIdx].eng;
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
             window.speechSynthesis.speak(utterance);
