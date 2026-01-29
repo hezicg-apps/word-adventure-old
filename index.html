@@ -7,20 +7,37 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Assistant', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Assistant', sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
         .tab-inactive { color: #94a3b8; border-bottom: 4px solid transparent; opacity: 0.6; }
         .tab-active { border-bottom: 4px solid currentColor; opacity: 1; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
+        .perspective-1000 { perspective: 1000px; }
         .card-inner { transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; position: relative; width: 100%; height: 100%; }
         .card-flipped .card-inner { transform: rotateY(180deg); }
         .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 1.5rem; }
         .card-back { transform: rotateY(180deg); }
-        .perspective-1000 { perspective: 1000px; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.2s ease-in-out 0s 2; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
 
-    <div class="max-w-md mx-auto bg-white min-h-screen shadow-xl flex flex-col">
+    <!-- Custom Modal Overlay -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-xs rounded-3xl shadow-2xl p-6 text-center transform transition-all scale-100">
+            <div id="modal-icon" class="text-5xl mb-4"></div>
+            <h2 id="modal-title" class="text-2xl font-black text-slate-800 mb-2"></h2>
+            <p id="modal-body" class="text-slate-600 mb-6"></p>
+            <button id="modal-btn" class="w-full py-4 rounded-2xl font-bold text-white shadow-lg transition-transform active:scale-95"></button>
+        </div>
+    </div>
+
+    <div class="max-w-md mx-auto bg-white min-h-screen shadow-xl flex flex-col relative">
         <!-- Header -->
         <header class="bg-white pt-6 pb-2 sticky top-0 z-20 border-b border-slate-100 text-center">
             <h1 class="text-2xl font-black text-slate-800 mb-4">לומדים אנגלית בכיף</h1>
@@ -46,75 +63,81 @@
             <!-- Setup View -->
             <section id="view-setup" class="space-y-6">
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-rose-100">
-                    <h2 class="text-lg font-bold mb-3 border-r-4 border-rose-500 pr-2">הוספת מילים</h2>
+                    <h2 class="text-lg font-bold mb-3 border-r-4 border-rose-500 pr-2 text-slate-700">הוספת מילים</h2>
                     <div class="space-y-3">
-                        <input type="text" id="input-hebrew" placeholder="עברית (תפוח)" class="w-full p-3 border-2 rounded-xl text-center focus:outline-rose-500">
-                        <input type="text" id="input-english" placeholder="English (Apple)" dir="ltr" class="w-full p-3 border-2 rounded-xl text-center focus:outline-rose-500">
-                        <button onclick="addWord()" class="w-full bg-rose-500 text-white font-bold py-3 rounded-xl shadow-md active:scale-95 transition-transform">הוסף לרשימה</button>
+                        <input type="text" id="input-hebrew" placeholder="עברית (תפוח)" class="w-full p-4 border-2 rounded-2xl text-center focus:border-rose-500 outline-none transition-colors">
+                        <input type="text" id="input-english" placeholder="English (Apple)" dir="ltr" class="w-full p-4 border-2 rounded-2xl text-center focus:border-rose-500 outline-none transition-colors">
+                        <button onclick="addWord()" class="w-full bg-rose-500 text-white font-bold py-4 rounded-2xl shadow-md active:scale-95 transition-all">הוסף לרשימה</button>
                     </div>
                 </div>
-                <div id="words-list" class="bg-white rounded-xl border border-slate-100 overflow-hidden"></div>
+                <div id="words-list" class="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm"></div>
                 <div id="start-learning-btn" class="hidden text-center p-4">
-                    <button onclick="switchView('cards')" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg animate-bounce text-lg">התחל ללמוד</button>
+                    <button onclick="switchView('cards')" class="bg-blue-600 text-white px-10 py-4 rounded-full font-bold shadow-xl animate-bounce text-lg">התחל ללמוד</button>
                 </div>
             </section>
 
             <!-- Cards View -->
             <section id="view-cards" class="hidden text-center space-y-4">
-                <div class="flex justify-between items-center mb-2 px-2">
-                    <span class="text-xs font-bold text-slate-400">התקדמות: <span id="progress-text">0/0</span></span>
-                    <div class="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div id="progress-bar" class="h-full bg-blue-500 w-0 transition-all"></div>
-                    </div>
+                <div class="flex justify-between items-center px-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">התקדמות</span>
+                    <span id="progress-text" class="text-xs font-bold text-blue-600">0/0</span>
                 </div>
+                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
+                    <div id="progress-bar" class="h-full bg-blue-500 w-0 transition-all duration-500"></div>
+                </div>
+
                 <div id="card-container" class="w-full aspect-[3/4] relative perspective-1000">
                     <div class="card-inner" onclick="this.parentElement.classList.toggle('card-flipped')">
-                        <div class="card-face bg-white border-2 border-blue-100 shadow-xl p-8">
-                            <button onclick="event.stopPropagation(); speakText(words[currentIdx].eng);" class="bg-blue-50 p-6 rounded-full mb-6 text-2xl">🔊</button>
+                        <div class="card-face bg-white border-2 border-blue-50 shadow-xl p-8">
+                            <button onclick="event.stopPropagation(); speakText(words[currentIdx].eng);" class="bg-blue-50 p-6 rounded-full mb-6 text-3xl hover:bg-blue-100 transition-colors">🔊</button>
                             <h2 id="card-english" class="text-4xl font-black text-blue-900" dir="ltr"></h2>
-                            <p class="mt-4 text-xs text-slate-400 italic">לחץ להפיכה</p>
+                            <p class="mt-6 text-sm text-slate-300 font-medium">לחץ כדי לראות תרגום</p>
                         </div>
-                        <div class="card-face card-back bg-blue-600 text-white border-2 border-blue-400 shadow-xl p-8">
+                        <div class="card-face card-back bg-blue-600 text-white shadow-xl p-8">
                             <h2 id="card-hebrew" class="text-4xl font-black"></h2>
+                            <p class="mt-6 text-blue-200 text-sm">הבנת את המילה?</p>
                         </div>
                     </div>
                 </div>
-                <div class="flex gap-4 mt-6">
-                    <button onclick="markAsKnown(false)" class="flex-1 bg-white border-2 border-slate-200 text-slate-600 py-4 rounded-xl font-bold active:bg-slate-50">לא בטוח</button>
-                    <button onclick="markAsKnown(true)" class="flex-1 bg-green-500 text-white py-4 rounded-xl font-bold shadow-md active:bg-green-600">יודע!</button>
+
+                <div class="grid grid-cols-2 gap-4 mt-8">
+                    <button onclick="markAsKnown(false)" class="bg-white border-2 border-slate-200 text-slate-500 py-4 rounded-2xl font-bold active:bg-slate-50 transition-colors">עוד לא</button>
+                    <button onclick="markAsKnown(true)" class="bg-green-500 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">יודע!</button>
                 </div>
-                <div class="flex justify-center gap-8 text-slate-400 mt-2">
-                    <button onclick="moveCard(-1)">⬅️</button>
-                    <span id="card-index">1/1</span>
-                    <button onclick="moveCard(1)">➡️</button>
+                
+                <div class="flex justify-center items-center gap-10 text-slate-300 mt-4">
+                    <button onclick="moveCard(-1)" class="p-2 text-2xl active:text-blue-500">⬅️</button>
+                    <span id="card-index" class="font-bold text-sm">1/1</span>
+                    <button onclick="moveCard(1)" class="p-2 text-2xl active:text-blue-500">➡️</button>
                 </div>
             </section>
 
             <!-- Practice View -->
             <section id="view-practice" class="hidden text-center space-y-6">
-                <div class="bg-indigo-50 p-4 rounded-xl text-indigo-800 font-bold mb-4" id="practice-status">בחר את התרגום הנכון:</div>
-                <div class="bg-white p-8 rounded-2xl shadow-sm border-b-4 border-indigo-200">
-                    <button id="practice-speaker" class="bg-indigo-100 p-3 rounded-full mb-4 text-indigo-600">🔊</button>
-                    <h2 id="practice-target" class="text-3xl font-black text-slate-800" dir="ltr"></h2>
+                <div class="bg-indigo-50 p-3 rounded-xl text-indigo-700 font-bold text-sm" id="practice-status">בחר את התרגום הנכון:</div>
+                <div class="bg-white p-10 rounded-3xl shadow-sm border-b-8 border-indigo-100 relative">
+                    <button id="practice-speaker" class="bg-indigo-50 p-3 rounded-full mb-4 text-indigo-600 text-xl">🔊</button>
+                    <h2 id="practice-target" class="text-4xl font-black text-slate-800" dir="ltr"></h2>
                 </div>
-                <div id="practice-options" class="grid grid-cols-1 gap-3"></div>
+                <div id="practice-options" class="grid grid-cols-1 gap-3 mt-4"></div>
             </section>
 
             <!-- Game View -->
             <section id="view-game" class="hidden text-center space-y-4">
-                <div class="flex justify-between items-center px-2">
-                    <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">זמן: <span id="game-timer">30</span></span>
-                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">נקודות: <span id="game-score">0</span></span>
+                <div class="flex justify-between items-center px-2 mb-2">
+                    <div class="flex items-center gap-2 bg-amber-100 px-4 py-2 rounded-2xl">
+                        <span class="text-amber-600">⏱️</span>
+                        <span id="game-timer" class="font-black text-amber-700 w-6">30</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-emerald-100 px-4 py-2 rounded-2xl">
+                        <span class="text-emerald-600">⭐</span>
+                        <span id="game-score" class="font-black text-emerald-700">0</span>
+                    </div>
                 </div>
-                <div id="game-box" class="bg-amber-500 p-10 rounded-2xl shadow-lg text-white">
-                    <h2 id="game-target" class="text-4xl font-black" dir="ltr">?</h2>
+                <div id="game-box" class="bg-amber-500 p-12 rounded-3xl shadow-lg text-white transition-all">
+                    <h2 id="game-target" class="text-5xl font-black tracking-wide" dir="ltr">?</h2>
                 </div>
-                <div id="game-options" class="grid grid-cols-2 gap-3"></div>
-                <div id="game-over" class="hidden bg-white p-6 rounded-2xl shadow-xl absolute inset-x-4 top-1/4 z-30 border-t-8 border-amber-500">
-                    <h2 class="text-2xl font-bold mb-2">נגמר הזמן!</h2>
-                    <p class="text-4xl font-black text-amber-600 mb-6" id="final-score">0</p>
-                    <button onclick="startGame()" class="w-full bg-amber-500 text-white py-4 rounded-xl font-bold">שחק שוב</button>
-                </div>
+                <div id="game-options" class="grid grid-cols-2 gap-3 mt-4"></div>
             </section>
 
         </main>
@@ -125,11 +148,24 @@
         let knownWordsIds = new Set();
         let currentIdx = 0;
         let practiceIdx = 0;
-        
-        // Game state
         let gameScore = 0;
         let timeLeft = 30;
         let gameInterval;
+
+        // --- UI HELPERS ---
+        function showModal(icon, title, body, btnText, btnClass, callback) {
+            document.getElementById('modal-icon').textContent = icon;
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').textContent = body;
+            const btn = document.getElementById('modal-btn');
+            btn.textContent = btnText;
+            btn.className = `w-full py-4 rounded-2xl font-bold text-white shadow-lg transition-transform active:scale-95 ${btnClass}`;
+            btn.onclick = () => {
+                document.getElementById('custom-modal').classList.add('hidden');
+                if(callback) callback();
+            };
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
 
         function addWord() {
             const heb = document.getElementById('input-hebrew').value.trim();
@@ -146,10 +182,12 @@
         function renderWords() {
             const list = document.getElementById('words-list');
             list.innerHTML = words.map(w => `
-                <div class="flex justify-between items-center p-4 border-b last:border-0">
-                    <span class="font-bold">${w.heb}</span>
-                    <span class="text-rose-600 font-bold" dir="ltr">${w.eng}</span>
-                    <button onclick="removeWord('${w.id}')" class="text-slate-300 px-2">🗑️</button>
+                <div class="flex justify-between items-center p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                    <div class="flex flex-col text-right">
+                        <span class="font-bold text-slate-800">${w.heb}</span>
+                        <span class="text-rose-500 font-bold text-sm" dir="ltr">${w.eng}</span>
+                    </div>
+                    <button onclick="removeWord('${w.id}')" class="text-slate-200 hover:text-rose-300 p-2">🗑️</button>
                 </div>
             `).join('');
             document.getElementById('start-learning-btn').classList.toggle('hidden', words.length < 3);
@@ -210,8 +248,9 @@
             if (known) knownWordsIds.add(words[currentIdx].id);
             else knownWordsIds.delete(words[currentIdx].id);
             updateNavState();
+            
             if (knownWordsIds.size === words.length) {
-                setTimeout(() => { if(confirm("מעולה! סיימת את ההקנייה. לעבור לתרגול?")) switchView('practice'); }, 300);
+                showModal('⭐', 'כל הכבוד!', 'סיימת להכיר את כל המילים. מוכן לבדוק את עצמך בתרגול?', 'קדימה לתרגול', 'bg-indigo-600', () => switchView('practice'));
             } else {
                 moveCard(1);
             }
@@ -222,7 +261,7 @@
             updateCardUI();
         }
 
-        // --- PRACTICE LOGIC ---
+        // --- PRACTICE ---
         function initPractice() {
             practiceIdx = 0;
             updatePracticeQuestion();
@@ -234,41 +273,39 @@
             document.getElementById('practice-speaker').onclick = () => speakText(target.eng);
             speakText(target.eng);
 
-            const options = [target.heb];
-            const others = words.filter(w => w.id !== target.id).map(w => w.heb);
+            let options = [target.heb];
+            let others = words.filter(w => w.id !== target.id).map(w => w.heb);
             while(options.length < Math.min(4, words.length)) {
-                const rand = others[Math.floor(Math.random() * others.length)];
-                if(!options.includes(rand)) options.push(rand);
+                let r = others[Math.floor(Math.random() * others.length)];
+                if(!options.includes(r)) options.push(r);
             }
             options.sort(() => Math.random() - 0.5);
 
-            const container = document.getElementById('practice-options');
-            container.innerHTML = options.map(opt => `
-                <button onclick="checkPractice('${opt}')" class="bg-white border-2 border-slate-100 p-4 rounded-xl font-bold active:border-indigo-500 transition-colors">
+            document.getElementById('practice-options').innerHTML = options.map(opt => `
+                <button onclick="checkPractice(this, '${opt}')" class="bg-white border-2 border-slate-100 p-5 rounded-2xl font-bold transition-all active:scale-95">
                     ${opt}
                 </button>
             `).join('');
         }
 
-        function checkPractice(selected) {
+        function checkPractice(btn, selected) {
             const correct = words[practiceIdx].heb;
             if(selected === correct) {
+                btn.classList.add('bg-green-500', 'text-white', 'border-green-500');
                 practiceIdx++;
-                if(practiceIdx < words.length) updatePracticeQuestion();
-                else {
-                    alert("כל הכבוד! סיימת את התרגול. המשחק פתוח!");
-                    switchView('game');
-                }
+                setTimeout(() => {
+                    if(practiceIdx < words.length) updatePracticeQuestion();
+                    else showModal('🚀', 'הצלחת!', 'עברת את התרגול בהצלחה. הגיע הזמן למשחק המהירות!', 'בוא נשחק', 'bg-amber-500', () => switchView('game'));
+                }, 400);
             } else {
-                alert("טעות, נסה שוב!");
+                btn.classList.add('bg-rose-500', 'text-white', 'border-rose-500', 'shake');
+                setTimeout(() => btn.classList.remove('bg-rose-500', 'text-white', 'border-rose-500', 'shake'), 500);
             }
         }
 
-        // --- GAME LOGIC ---
+        // --- GAME ---
         function startGame() {
-            gameScore = 0;
-            timeLeft = 30;
-            document.getElementById('game-over').classList.add('hidden');
+            gameScore = 0; timeLeft = 30;
             document.getElementById('game-score').textContent = "0";
             updateGameQuestion();
             clearInterval(gameInterval);
@@ -277,8 +314,7 @@
                 document.getElementById('game-timer').textContent = timeLeft;
                 if(timeLeft <= 0) {
                     clearInterval(gameInterval);
-                    document.getElementById('game-over').classList.remove('hidden');
-                    document.getElementById('final-score').textContent = gameScore;
+                    showModal('🏁', 'נגמר הזמן!', `צברת ${gameScore} נקודות! רוצה לנסות לשבור את השיא?`, 'משחק חוזר', 'bg-amber-500', startGame);
                 }
             }, 1000);
         }
@@ -287,28 +323,38 @@
             const target = words[Math.floor(Math.random() * words.length)];
             document.getElementById('game-target').textContent = target.eng;
             
-            const options = [target.heb];
-            const others = words.filter(w => w.id !== target.id).map(w => w.heb);
+            let options = [target.heb];
+            let others = words.filter(w => w.id !== target.id).map(w => w.heb);
             while(options.length < Math.min(4, words.length)) {
-                const rand = others[Math.floor(Math.random() * others.length)];
-                if(!options.includes(rand)) options.push(rand);
+                let r = others[Math.floor(Math.random() * others.length)];
+                if(!options.includes(r)) options.push(r);
             }
             options.sort(() => Math.random() - 0.5);
 
             document.getElementById('game-options').innerHTML = options.map(opt => `
-                <button onclick="checkGame('${opt}', '${target.heb}')" class="bg-white text-slate-800 p-4 rounded-xl font-bold shadow active:scale-95">
+                <button onclick="checkGame(this, '${opt}', '${target.heb}')" class="bg-white text-slate-800 p-5 rounded-2xl font-black shadow-md active:scale-90 transition-all">
                     ${opt}
                 </button>
             `).join('');
         }
 
-        function checkGame(selected, correct) {
+        function checkGame(btn, selected, correct) {
             if(selected === correct) {
                 gameScore += 10;
                 document.getElementById('game-score').textContent = gameScore;
-                updateGameQuestion();
+                document.getElementById('game-box').classList.add('bg-emerald-500');
+                setTimeout(() => {
+                    document.getElementById('game-box').classList.remove('bg-emerald-500');
+                    updateGameQuestion();
+                }, 150);
             } else {
-                timeLeft = Math.max(0, timeLeft - 2); // Penalty
+                timeLeft = Math.max(0, timeLeft - 3);
+                btn.classList.add('bg-rose-500', 'text-white', 'shake');
+                document.getElementById('game-box').classList.add('bg-rose-500');
+                setTimeout(() => {
+                    btn.classList.remove('bg-rose-500', 'text-white', 'shake');
+                    document.getElementById('game-box').classList.remove('bg-rose-500');
+                }, 300);
             }
         }
 
@@ -316,6 +362,7 @@
             window.speechSynthesis.cancel();
             const u = new SpeechSynthesisUtterance(text);
             u.lang = 'en-US';
+            u.rate = 0.9;
             window.speechSynthesis.speak(u);
         }
     </script>
