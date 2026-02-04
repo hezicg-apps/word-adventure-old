@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EnglishMaster - Stable Version</title>
+    <title>EnglishMaster - Mastery Quiz Version</title>
     
     <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -28,19 +28,19 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback, useMemo } = React;
 
-        // --- Simple SVG Icons (No external library dependency) ---
+        // --- Simple SVG Icons ---
         const Icons = {
             Volume: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>,
             Trash: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
-            Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>,
-            X: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
-            Refresh: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            Refresh: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>,
+            Trophy: () => <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#EAB308" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
         };
 
         const App = () => {
             const [view, setView] = useState('setup'); 
             const [wordList, setWordList] = useState([]);
             const [knownWords, setKnownWords] = useState([]);
+            const [quizPassed, setQuizPassed] = useState(false);
 
             const masteryLevel = useMemo(() => {
                 if (wordList.length === 0) return 0;
@@ -58,15 +58,15 @@
             return (
                 <div className="max-w-xl mx-auto p-4 md:p-8 min-h-screen">
                     <header className="text-center mb-8">
-                        <h1 className="text-3xl font-black text-blue-600">EnglishMaster</h1>
+                        <h1 className="text-3xl font-black text-indigo-600">EnglishMaster</h1>
                         {wordList.length > 0 && (
                             <div className="mt-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                                 <div className="flex justify-between text-sm font-bold mb-1">
-                                    <span>שליטה: {Math.round(masteryLevel)}%</span>
+                                    <span>התקדמות למידה: {Math.round(masteryLevel)}%</span>
                                     <span>{knownWords.length} / {wordList.length} מילים</span>
                                 </div>
                                 <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${masteryLevel}%` }}></div>
+                                    <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${masteryLevel}%` }}></div>
                                 </div>
                             </div>
                         )}
@@ -80,29 +80,37 @@
                             known={knownWords} 
                             onUpdateKnown={setKnownWords} 
                             onSpeak={speak}
-                            onFinish={() => setView('games')}
+                            onFinish={() => setView('quiz')}
+                        />
+                    )}
+
+                    {view === 'quiz' && (
+                        <QuizView 
+                            words={wordList} 
+                            onPass={() => { setQuizPassed(true); setView('games'); }}
+                            onFail={() => setView('learning')}
                         />
                     )}
 
                     {view === 'games' && (
                         <div className="space-y-4">
-                            <h2 className="text-xl font-bold text-center">בחר משחק</h2>
-                            <button 
-                                disabled={masteryLevel < 70}
-                                onClick={() => setView('speed-game')}
-                                className={`w-full p-6 rounded-2xl border-2 flex flex-col items-center transition ${masteryLevel >= 70 ? 'bg-white border-blue-100 hover:border-blue-400' : 'bg-gray-100 opacity-50 cursor-not-allowed'}`}
-                            >
-                                <span className="text-lg font-bold">מרוץ נגד הזמן</span>
-                                <span className="text-sm text-gray-500">זהה כמה שיותר מילים ב-30 שניות</span>
-                                {masteryLevel < 70 && <span className="text-red-500 text-xs mt-2 font-bold">נעול: נדרשת שליטה של 70%</span>}
-                            </button>
-                            
-                            <button 
-                                onClick={() => { setKnownWords([]); setView('learning'); }}
-                                className="w-full p-4 text-blue-600 font-bold flex items-center justify-center gap-2"
-                            >
-                                <Icons.Refresh /> חזרה לתרגול
-                            </button>
+                            <h2 className="text-xl font-bold text-center mb-4">כל הכבוד! המשחקים פתוחים</h2>
+                            <div className="grid grid-cols-1 gap-4">
+                                <button 
+                                    onClick={() => setView('speed-game')}
+                                    className="w-full p-6 bg-white rounded-2xl border-2 border-indigo-100 hover:border-indigo-400 flex flex-col items-center transition shadow-sm"
+                                >
+                                    <span className="text-lg font-bold">מרוץ נגד הזמן</span>
+                                    <span className="text-sm text-gray-500">זהה כמה שיותר מילים ב-30 שניות</span>
+                                </button>
+                                
+                                <button 
+                                    onClick={() => { setQuizPassed(false); setView('learning'); }}
+                                    className="w-full p-4 text-indigo-600 font-bold flex items-center justify-center gap-2"
+                                >
+                                    <Icons.Refresh /> חזרה לתרגול ורענון
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -133,27 +141,27 @@
 
             return (
                 <div className="bg-white p-6 rounded-2xl shadow-lg">
-                    <h3 className="font-bold mb-4">הדבק רשימת מילים (אנגלית - עברית)</h3>
+                    <h3 className="font-bold mb-4">שלב 1: הזנת מילים</h3>
                     <textarea 
                         className="w-full h-32 p-3 border rounded-xl mb-4 text-left" 
                         dir="ltr"
-                        placeholder="apple - תפוח&#10;banana - בננה"
+                        placeholder="dog - כלב&#10;cat - חתול"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                     ></textarea>
-                    <button onClick={handleAdd} className="w-full bg-blue-50 text-blue-600 py-2 rounded-xl font-bold mb-6">ייבא לרשימה</button>
+                    <button onClick={handleAdd} className="w-full bg-indigo-50 text-indigo-600 py-2 rounded-xl font-bold mb-6">הוסף לרשימה</button>
                     
                     {list.length > 0 && (
                         <div className="border-t pt-4">
                             <div className="max-h-40 overflow-y-auto mb-4 space-y-2">
                                 {list.map(item => (
                                     <div key={item.id} className="flex justify-between bg-gray-50 p-2 rounded-lg text-sm">
-                                        <span dir="ltr">{item.eng} - {item.heb}</span>
+                                        <span dir="ltr" className="font-medium">{item.eng} - {item.heb}</span>
                                         <button onClick={() => setList(list.filter(i => i.id !== item.id))} className="text-red-400"><Icons.Trash /></button>
                                     </div>
                                 ))}
                             </div>
-                            <button onClick={() => onComplete(list)} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-xl shadow-lg">התחל ללמוד</button>
+                            <button onClick={() => onComplete(list)} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black text-xl shadow-lg">התחל ללמוד</button>
                         </div>
                     )}
                 </div>
@@ -172,7 +180,8 @@
                 } else {
                     setQueue([]);
                 }
-            }, [words, known.length]);
+                setIdx(0);
+            }, [words, known.length === 0]);
 
             const handleDecision = (isKnown) => {
                 const current = queue[idx];
@@ -190,9 +199,10 @@
             if (queue.length === 0 || idx >= queue.length) {
                 return (
                     <div className="text-center bg-white p-8 rounded-2xl shadow-lg">
-                        <h2 className="text-2xl font-bold mb-4">כל הכבוד!</h2>
-                        <p className="mb-6">סיימת לעבור על המילים בסבב זה.</p>
-                        <button onClick={onFinish} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">עבור למשחקים</button>
+                        <div className="mb-4 flex justify-center"><Icons.Trophy /></div>
+                        <h2 className="text-2xl font-bold mb-2">שלב הלמידה הושלם!</h2>
+                        <p className="text-gray-600 mb-6 text-sm">עברת על כל המילים. כעת עליך לעבור מבחן קצר כדי לפתוח את המשחקים.</p>
+                        <button onClick={onFinish} className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-md">עבור למבחן השליטה</button>
                     </div>
                 );
             }
@@ -203,23 +213,114 @@
                 <div className="flex flex-col items-center">
                     <div className="w-full max-w-xs aspect-square perspective cursor-pointer" onClick={() => setFlipped(!flipped)}>
                         <div className={`relative w-full h-full preserve-3d ${flipped ? 'rotate-y-180' : ''}`}>
-                            {/* Front */}
-                            <div className="absolute inset-0 bg-white border-4 border-blue-500 rounded-3xl flex flex-col items-center justify-center backface-hidden shadow-xl">
-                                <span className="text-4xl font-black text-blue-900 mb-4" dir="ltr">{current.eng}</span>
-                                <button onClick={(e) => { e.stopPropagation(); onSpeak(current.eng); }} className="p-3 bg-blue-50 text-blue-600 rounded-full">
+                            <div className="absolute inset-0 bg-white border-4 border-indigo-500 rounded-3xl flex flex-col items-center justify-center backface-hidden shadow-xl">
+                                <span className="text-4xl font-black text-indigo-900 mb-4" dir="ltr">{current.eng}</span>
+                                <button onClick={(e) => { e.stopPropagation(); onSpeak(current.eng); }} className="p-3 bg-indigo-50 text-indigo-600 rounded-full hover:scale-110 transition">
                                     <Icons.Volume />
                                 </button>
+                                <span className="absolute bottom-4 text-xs text-gray-300">לחץ להיפוך</span>
                             </div>
-                            {/* Back */}
-                            <div className="absolute inset-0 bg-blue-600 border-4 border-white rounded-3xl flex items-center justify-center backface-hidden rotate-y-180 shadow-xl">
-                                <span className="text-4xl font-black text-white">{current.heb}</span>
+                            <div className="absolute inset-0 bg-indigo-600 border-4 border-white rounded-3xl flex items-center justify-center backface-hidden rotate-y-180 shadow-xl">
+                                <span className="text-4xl font-black text-white px-4 text-center">{current.heb}</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 w-full mt-10">
-                        <button onClick={() => handleDecision(false)} className="bg-white border-2 border-red-500 text-red-500 py-4 rounded-xl font-bold">לא יודע</button>
-                        <button onClick={() => handleDecision(true)} className="bg-green-500 text-white py-4 rounded-xl font-bold">יודע!</button>
+                        <button onClick={() => handleDecision(false)} className="bg-white border-2 border-red-500 text-red-500 py-4 rounded-xl font-bold hover:bg-red-50 transition">עדיין לא יודע</button>
+                        <button onClick={() => handleDecision(true)} className="bg-green-500 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-green-600 transition">יודע!</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const QuizView = ({ words, onPass, onFail }) => {
+            const [currentIdx, setCurrentIdx] = useState(0);
+            const [score, setScore] = useState(0);
+            const [questions, setQuestions] = useState([]);
+            const [finished, setFinished] = useState(false);
+            const [selected, setSelected] = useState(null);
+            const [isCorrect, setIsCorrect] = useState(null);
+
+            useEffect(() => {
+                // Generate quiz questions
+                const q = words.map(w => {
+                    const others = words.filter(item => item.id !== w.id).sort(() => 0.5 - Math.random()).slice(0, 3);
+                    const options = [...others, w].sort(() => 0.5 - Math.random());
+                    return { question: w.eng, answer: w.heb, id: w.id, options };
+                }).sort(() => 0.5 - Math.random());
+                setQuestions(q);
+            }, [words]);
+
+            const handleAnswer = (option) => {
+                if (selected !== null) return;
+                
+                setSelected(option.id);
+                const correct = option.id === questions[currentIdx].id;
+                setIsCorrect(correct);
+                if (correct) setScore(s => s + 1);
+
+                setTimeout(() => {
+                    if (currentIdx + 1 < questions.length) {
+                        setCurrentIdx(currentIdx + 1);
+                        setSelected(null);
+                        setIsCorrect(null);
+                    } else {
+                        setFinished(true);
+                    }
+                }, 1000);
+            };
+
+            if (questions.length === 0) return <div>טוען...</div>;
+
+            if (finished) {
+                const pass = score / questions.length >= 0.8;
+                return (
+                    <div className="bg-white p-8 rounded-2xl shadow-xl text-center">
+                        <h2 className="text-2xl font-bold mb-2">{pass ? "מעולה!" : "צריך עוד קצת תרגול"}</h2>
+                        <p className="text-4xl font-black text-indigo-600 mb-4">{score} / {questions.length}</p>
+                        <p className="text-gray-600 mb-8">{pass ? "עברת את המבחן בהצלחה. המשחקים פתוחים עבורך!" : "לא הגעת לציון הנדרש (80%). כדאי לחזור על המילים שוב."}</p>
+                        {pass ? (
+                            <button onClick={onPass} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold">המשך למשחקים</button>
+                        ) : (
+                            <button onClick={onFail} className="w-full bg-red-500 text-white py-4 rounded-xl font-bold">חזור ללמידה</button>
+                        )}
+                    </div>
+                );
+            }
+
+            const current = questions[currentIdx];
+
+            return (
+                <div className="bg-white p-6 rounded-2xl shadow-lg">
+                    <div className="flex justify-between items-center mb-6">
+                        <span className="text-sm font-bold text-gray-400">שאלה {currentIdx + 1} מתוך {questions.length}</span>
+                        <div className="h-2 w-24 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-indigo-500 transition-all" style={{width: `${((currentIdx+1)/questions.length)*100}%`}}></div>
+                        </div>
+                    </div>
+                    
+                    <h3 className="text-center text-3xl font-black mb-10 text-indigo-900" dir="ltr">{current.question}</h3>
+                    
+                    <div className="space-y-3">
+                        {current.options.map(opt => {
+                            let statusClass = "border-gray-100 hover:border-indigo-300";
+                            if (selected === opt.id) {
+                                statusClass = isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50";
+                            } else if (selected !== null && opt.heb === current.answer) {
+                                statusClass = "border-green-500 bg-green-50";
+                            }
+
+                            return (
+                                <button 
+                                    key={opt.id} 
+                                    onClick={() => handleAnswer(opt)}
+                                    className={`w-full p-4 border-2 rounded-xl text-lg font-bold transition ${statusClass}`}
+                                >
+                                    {opt.heb}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             );
@@ -258,7 +359,7 @@
                 return (
                     <div className="text-center bg-white p-8 rounded-2xl shadow-lg">
                         <h2 className="text-2xl font-bold mb-4">מוכנים למרוץ?</h2>
-                        <button onClick={() => { setActive(true); next(); }} className="bg-orange-500 text-white px-10 py-4 rounded-xl font-black text-xl">התחל!</button>
+                        <button onClick={() => { setActive(true); next(); }} className="bg-orange-500 text-white px-10 py-4 rounded-xl font-black text-xl shadow-lg">התחל!</button>
                     </div>
                 );
             }
@@ -267,8 +368,8 @@
                 return (
                     <div className="text-center bg-white p-8 rounded-2xl shadow-lg">
                         <h2 className="text-2xl font-bold mb-2">נגמר הזמן!</h2>
-                        <p className="text-4xl font-black text-blue-600 mb-6">{score} נקודות</p>
-                        <button onClick={onBack} className="w-full bg-gray-100 py-3 rounded-xl font-bold">חזרה</button>
+                        <p className="text-4xl font-black text-indigo-600 mb-6">{score} נקודות</p>
+                        <button onClick={onBack} className="w-full bg-gray-100 py-3 rounded-xl font-bold">חזרה לתפריט</button>
                     </div>
                 );
             }
@@ -279,10 +380,10 @@
                         <span className="text-red-500">זמן: {timeLeft}</span>
                         <span className="text-green-600">נקודות: {score}</span>
                     </div>
-                    <div className="text-center py-10 bg-blue-50 rounded-2xl mb-6 text-3xl font-black" dir="ltr">{current?.eng}</div>
+                    <div className="text-center py-10 bg-indigo-50 rounded-2xl mb-6 text-3xl font-black" dir="ltr">{current?.eng}</div>
                     <div className="grid grid-cols-1 gap-3">
                         {options.map(o => (
-                            <button key={o.id} onClick={() => handleAns(o)} className="p-4 border-2 rounded-xl font-bold hover:bg-blue-50 transition">{o.heb}</button>
+                            <button key={o.id} onClick={() => handleAns(o)} className="p-4 border-2 rounded-xl font-bold hover:bg-indigo-50 hover:border-indigo-500 transition shadow-sm">{o.heb}</button>
                         ))}
                     </div>
                 </div>
