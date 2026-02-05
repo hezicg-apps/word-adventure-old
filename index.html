@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>English Magic - Full Games</title>
+    <title>English Magic - Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        body { touch-action: manipulation; margin: 0; padding: 0; height: 100%; }
+        body { touch-action: manipulation; margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
         html, #root { height: 100%; }
-        .perspective { perspective: 1000px; }
+        .perspective { perspective: 1200px; }
         .preserve-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
         }
         .animate-shake { animation: shake 0.2s ease-in-out 0s 2; }
     </style>
@@ -30,9 +30,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect } = React;
 
-        // Firebase Setup
+        // Firebase Config
         const firebaseConfig = { apiKey: "EMPTY", authDomain: "YOUR_PROJECT.firebaseapp.com", projectId: "YOUR_PROJECT_ID", storageBucket: "YOUR_PROJECT.appspot.com", messagingSenderId: "YOUR_SENDER_ID", appId: "YOUR_APP_ID" };
         const getFinalConfig = () => { try { if (typeof __firebase_config !== 'undefined') return JSON.parse(__firebase_config); } catch(e) {} return firebaseConfig; };
         if (!firebase.apps.length) firebase.initializeApp(getFinalConfig());
@@ -56,69 +56,7 @@
             Trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
         };
 
-        // --- Game: Spelling (Dictation) ---
-        const SpellingGame = ({ words, onBack, isDark }) => {
-            const [idx, setIdx] = useState(0);
-            const [input, setInput] = useState("");
-            const [status, setStatus] = useState("playing"); // playing, correct, finished
-            const current = words[idx];
-
-            useEffect(() => { if (current) speak(current.eng); }, [idx]);
-
-            const check = (e) => {
-                e.preventDefault();
-                if (input.toLowerCase().trim() === current.eng.toLowerCase().trim()) {
-                    setStatus("correct");
-                    setTimeout(() => {
-                        if (idx + 1 < words.length) {
-                            setIdx(idx + 1);
-                            setInput("");
-                            setStatus("playing");
-                        } else setStatus("finished");
-                    }, 1000);
-                } else {
-                    setStatus("wrong");
-                    setTimeout(() => setStatus("playing"), 1000);
-                }
-            };
-
-            if (status === "finished") return (
-                <div className="text-center p-8 space-y-6">
-                    <h2 className="text-4xl font-black">מלך ההכתבות! 👑</h2>
-                    <button onClick={onBack} className="bg-sky-500 text-white px-8 py-3 rounded-xl font-bold">חזרה</button>
-                </div>
-            );
-
-            return (
-                <div className="flex flex-col items-center space-y-8 py-10 w-full max-w-sm mx-auto">
-                    <div className="text-center">
-                        <span className="opacity-50 text-sm font-bold">מילה {idx + 1} מתוך {words.length}</span>
-                        <h2 className="text-2xl font-black">הכתבה באנגלית</h2>
-                    </div>
-                    <button onClick={() => speak(current.eng)} className="w-24 h-24 bg-sky-500 text-white rounded-full flex items-center justify-center shadow-xl active:scale-90 transition-transform">
-                        <Icons.Volume size={40} />
-                    </button>
-                    <form onSubmit={check} className="w-full space-y-4">
-                        <input 
-                            type="text" 
-                            value={input} 
-                            onChange={(e) => setInput(e.target.value)}
-                            autoFocus
-                            dir="ltr"
-                            className={`w-full p-4 rounded-2xl border-4 text-center text-2xl font-black outline-none transition-all ${
-                                status === 'correct' ? 'border-green-500 bg-green-50' : 
-                                status === 'wrong' ? 'border-red-500 bg-red-50 animate-shake' : 
-                                (isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-sky-100')
-                            }`}
-                            placeholder="Type here..."
-                        />
-                        <button type="submit" className="w-full bg-sky-500 text-white py-4 rounded-2xl font-black text-xl">בדוק אותי</button>
-                    </form>
-                </div>
-            );
-        };
-
-        // --- Game: Memory ---
+        // --- Memory Game ---
         const MemoryGame = ({ words, onBack, isDark }) => {
             const [cards, setCards] = useState([]);
             const [flipped, setFlipped] = useState([]);
@@ -147,6 +85,9 @@
                     if (c1.matchId === c2.matchId) {
                         setMatched([...matched, c1.matchId]);
                         setFlipped([]);
+                        // הקראה של המילה באנגלית כשמוצאים זוג
+                        const engWord = c1.type === 'eng' ? c1.text : c2.text;
+                        speak(engWord);
                     } else {
                         setTimeout(() => setFlipped([]), 1000);
                     }
@@ -154,27 +95,27 @@
             };
 
             if (matched.length === cards.length / 2 && cards.length > 0) return (
-                <div className="text-center p-8 space-y-4">
-                    <h2 className="text-4xl font-black text-yellow-500">ניצחת! 🏆</h2>
-                    <p className="font-bold">סיימת ב-{moves} מהלכים.</p>
-                    <button onClick={onBack} className="bg-sky-500 text-white px-8 py-3 rounded-xl font-bold">חזרה</button>
+                <div className="text-center p-8 space-y-4 flex flex-col items-center justify-center min-h-[60vh]">
+                    <h2 className="text-5xl font-black text-yellow-500 mb-4 animate-bounce">🏆 ניצחון!</h2>
+                    <p className="text-xl font-bold">סיימת ב-{moves} מהלכים</p>
+                    <button onClick={onBack} className="mt-6 bg-sky-500 text-white px-10 py-4 rounded-2xl text-xl font-black shadow-lg">חזרה לתפריט</button>
                 </div>
             );
 
             return (
-                <div className="w-full max-w-md mx-auto py-6">
-                    <div className="flex justify-between items-center mb-6 px-2">
-                        <span className="font-black">מהלכים: {moves}</span>
-                        <button onClick={onBack} className="text-sm opacity-50 underline">יציאה</button>
+                <div className="w-full max-w-md mx-auto py-4 px-2">
+                    <div className="flex justify-between items-center mb-6 px-4">
+                        <span className="font-black text-lg">מהלכים: {moves}</span>
+                        <button onClick={onBack} className="text-sky-500 font-bold underline">יציאה</button>
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-4">
                         {cards.map(card => {
                             const isOpen = flipped.includes(card.id) || matched.includes(card.matchId);
                             return (
                                 <div key={card.id} onClick={() => handleFlip(card)} className="aspect-square perspective cursor-pointer">
                                     <div className={`relative w-full h-full preserve-3d transition-transform duration-500 ${isOpen ? 'rotate-y-180' : ''}`}>
-                                        <div className={`absolute inset-0 backface-hidden rounded-xl border-2 flex items-center justify-center text-2xl shadow-sm ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-sky-100 text-sky-500'}`}>?</div>
-                                        <div className={`absolute inset-0 backface-hidden rotate-y-180 rounded-xl border-2 flex items-center justify-center p-2 text-center text-xs font-black leading-tight ${isDark ? 'bg-sky-900 border-white' : 'bg-sky-500 border-white text-white shadow-inner'}`}>
+                                        <div className={`absolute inset-0 backface-hidden rounded-2xl border-2 flex items-center justify-center text-4xl shadow-md ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-sky-100 text-sky-200'}`}>?</div>
+                                        <div className={`absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-2 flex items-center justify-center p-2 text-center text-sm md:text-base font-black leading-tight shadow-inner ${isDark ? 'bg-sky-900 border-white text-white' : 'bg-sky-500 border-white text-white'}`}>
                                             {card.text}
                                         </div>
                                     </div>
@@ -186,7 +127,74 @@
             );
         };
 
-        // --- Flashcards Loop ---
+        // --- Spelling Game ---
+        const SpellingGame = ({ words, onBack, isDark }) => {
+            const [idx, setIdx] = useState(0);
+            const [input, setInput] = useState("");
+            const [status, setStatus] = useState("playing");
+            const current = words[idx];
+
+            useEffect(() => { if (current) speak(current.eng); }, [idx]);
+
+            const check = (e) => {
+                e.preventDefault();
+                if (input.toLowerCase().trim() === current.eng.toLowerCase().trim()) {
+                    setStatus("correct");
+                    setTimeout(() => {
+                        if (idx + 1 < words.length) { setIdx(idx + 1); setInput(""); setStatus("playing"); }
+                        else setStatus("finished");
+                    }, 1000);
+                } else {
+                    setStatus("wrong");
+                    setTimeout(() => setStatus("playing"), 1000);
+                }
+            };
+
+            if (status === "finished") return (
+                <div className="text-center p-8 flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+                    <h2 className="text-5xl font-black text-orange-500">וואו! ✍️</h2>
+                    <p className="text-xl font-bold">סיימת את כל ההכתבה בהצלחה!</p>
+                    <button onClick={onBack} className="bg-sky-500 text-white px-10 py-4 rounded-2xl text-xl font-black">חזרה</button>
+                </div>
+            );
+
+            return (
+                <div className="flex flex-col items-center space-y-8 py-6 w-full max-w-sm mx-auto">
+                    <div className="text-center">
+                        <span className="opacity-50 text-sm font-bold">מילה {idx + 1} מתוך {words.length}</span>
+                        <h2 className="text-2xl font-black mt-1">איך כותבים את המילה?</h2>
+                    </div>
+                    
+                    <div className={`w-full p-8 rounded-3xl text-center border-4 shadow-xl ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-orange-100'}`}>
+                        <p className="text-sm font-bold opacity-40 mb-2">תרגום:</p>
+                        <h3 className="text-4xl font-black text-orange-500">{current.heb}</h3>
+                    </div>
+
+                    <button onClick={() => speak(current.eng)} className="w-20 h-20 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+                        <Icons.Volume size={32} />
+                    </button>
+
+                    <form onSubmit={check} className="w-full space-y-4">
+                        <input 
+                            type="text" 
+                            value={input} 
+                            onChange={(e) => setInput(e.target.value)}
+                            autoFocus
+                            dir="ltr"
+                            className={`w-full p-5 rounded-2xl border-4 text-center text-3xl font-black outline-none transition-all ${
+                                status === 'correct' ? 'border-green-500 bg-green-50' : 
+                                status === 'wrong' ? 'border-red-500 bg-red-50 animate-shake' : 
+                                (isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-sky-100')
+                            }`}
+                            placeholder="Type here..."
+                        />
+                        <button type="submit" className="w-full bg-sky-500 text-white py-5 rounded-2xl font-black text-xl shadow-lg">בדוק הכתבה</button>
+                    </form>
+                </div>
+            );
+        };
+
+        // --- Flashcards ---
         const Flashcards = ({ words, onFinish, isDark }) => {
             const [queue, setQueue] = useState([...words]);
             const [idx, setIdx] = useState(0);
@@ -200,31 +208,39 @@
             };
 
             return (
-                <div className="flex flex-col items-center space-y-6 flex-grow py-4">
+                <div className="flex flex-col items-center space-y-8 flex-grow py-4">
                     <div className="text-center">
-                        <span className="text-xs opacity-50 font-bold">מילה {idx + 1} מתוך {queue.length}</span>
-                        <h2 className="text-xl font-black italic">שלב 1: לימוד ותרגול</h2>
+                        <span className="text-sm opacity-50 font-bold tracking-widest">מילה {idx + 1} מתוך {queue.length}</span>
+                        <h2 className="text-2xl font-black italic">שלב 1: לימוד ותרגול</h2>
                     </div>
-                    <div className="w-64 aspect-[3/4] perspective" onClick={() => setIsFlipped(!isFlipped)}>
-                        <div className={`relative w-full h-full preserve-3d transition-transform duration-500 rounded-3xl shadow-xl ${isFlipped ? 'rotate-y-180' : ''}`}>
-                            <div className={`absolute inset-0 backface-hidden rounded-3xl border-4 flex flex-col items-center justify-center ${isDark ? 'bg-slate-900 border-sky-500' : 'bg-white border-sky-400'}`}>
-                                <h3 className="text-3xl font-black">{current.eng}</h3>
-                                <button onClick={(e) => { e.stopPropagation(); speak(current.eng); }} className="mt-6 p-3 bg-sky-100 text-sky-600 rounded-full"><Icons.Volume size={20}/></button>
+
+                    <div className="w-full max-w-[280px] aspect-[3/4] perspective cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
+                        <div className={`relative w-full h-full preserve-3d transition-transform duration-500 rounded-[2.5rem] shadow-2xl ${isFlipped ? 'rotate-y-180' : ''}`}>
+                            <div className={`absolute inset-0 backface-hidden rounded-[2.5rem] border-[6px] flex flex-col items-center justify-center ${isDark ? 'bg-slate-900 border-sky-500' : 'bg-white border-sky-400'}`}>
+                                <h3 className="text-5xl font-black text-center px-4 break-words">{current.eng}</h3>
+                                <button onClick={(e) => { e.stopPropagation(); speak(current.eng); }} className="mt-8 p-4 bg-sky-100 text-sky-600 rounded-full hover:bg-sky-200"><Icons.Volume size={28}/></button>
                             </div>
-                            <div className={`absolute inset-0 backface-hidden rotate-y-180 rounded-3xl border-4 flex items-center justify-center text-white ${isDark ? 'bg-sky-900' : 'bg-sky-600'}`}>
-                                <h3 className="text-3xl font-black">{current.heb}</h3>
+                            <div className={`absolute inset-0 backface-hidden rotate-y-180 rounded-[2.5rem] border-[6px] flex items-center justify-center text-white p-4 text-center ${isDark ? 'bg-sky-900 border-white' : 'bg-sky-600 border-white'}`}>
+                                <h3 className="text-5xl font-black break-words">{current.heb}</h3>
                             </div>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
-                        <button onClick={() => handleNext(false)} className="bg-red-100 text-red-600 p-4 rounded-2xl font-black flex flex-col items-center"><span>👎</span><span className="text-xs">עוד לא יודע</span></button>
-                        <button onClick={() => handleNext(true)} className="bg-green-100 text-green-600 p-4 rounded-2xl font-black flex flex-col items-center"><span>👍</span><span className="text-xs">יודע</span></button>
+
+                    <div className="grid grid-cols-2 gap-4 w-full max-w-sm px-2">
+                        <button onClick={() => handleNext(false)} className="bg-red-50 text-red-600 p-6 rounded-3xl font-black flex flex-col items-center shadow-md border-b-4 border-red-200 active:border-b-0 active:translate-y-1 transition-all">
+                            <span className="text-3xl mb-1">👎</span>
+                            <span className="text-lg font-black uppercase">עוד לא יודע</span>
+                        </button>
+                        <button onClick={() => handleNext(true)} className="bg-green-50 text-green-600 p-6 rounded-3xl font-black flex flex-col items-center shadow-md border-b-4 border-green-200 active:border-b-0 active:translate-y-1 transition-all">
+                            <span className="text-3xl mb-1">👍</span>
+                            <span className="text-lg font-black uppercase">יודע מצוין</span>
+                        </button>
                     </div>
                 </div>
             );
         };
 
-        // --- Knowledge Test (Gate) ---
+        // --- Knowledge Gate ---
         const KnowledgeGate = ({ words, onPass, onFail, isDark }) => {
             const [idx, setIdx] = useState(0);
             const [score, setScore] = useState(0);
@@ -254,19 +270,19 @@
             };
 
             return (
-                <div className="flex flex-col space-y-6 w-full max-w-sm mx-auto py-10">
+                <div className="flex flex-col space-y-6 w-full max-w-sm mx-auto py-8">
                     <h2 className="text-xl font-black text-center">מבחן מעבר (70% להצלחה)</h2>
-                    <div className="p-10 rounded-3xl text-center border-4 border-sky-500 font-black text-3xl">{current.eng}</div>
-                    <div className="space-y-2">
+                    <div className="p-12 rounded-[2rem] text-center border-[5px] border-sky-500 font-black text-4xl shadow-xl">{current.eng}</div>
+                    <div className="space-y-3">
                         {options.map(opt => (
-                            <button key={opt.id} onClick={() => handleAnswer(opt)} className={`w-full p-4 rounded-xl font-bold border-2 transition-all ${selected === opt.id ? (opt.id === current.id ? 'bg-green-500 border-green-600 text-white' : 'bg-red-500 border-red-600 text-white animate-shake') : (isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-sky-50')}`}>{opt.heb}</button>
+                            <button key={opt.id} onClick={() => handleAnswer(opt)} className={`w-full p-5 rounded-2xl font-black text-xl border-2 shadow-sm transition-all ${selected === opt.id ? (opt.id === current.id ? 'bg-green-500 border-green-600 text-white' : 'bg-red-500 border-red-600 text-white animate-shake') : (isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-sky-50 hover:bg-sky-50')}`}>{opt.heb}</button>
                         ))}
                     </div>
                 </div>
             );
         };
 
-        // --- Main App Component ---
+        // --- App ---
         const App = () => {
             const [view, setView] = useState('setup');
             const [wordList, setWordList] = useState([]);
@@ -301,38 +317,38 @@
 
             return (
                 <div className={`min-h-screen flex flex-col p-4 transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-sky-50 text-slate-900'}`}>
-                    <header className="flex justify-between items-center h-12 mb-6 max-w-md mx-auto w-full">
-                        <button onClick={() => setIsDark(!isDark)} className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isDark ? 'bg-slate-800 border-slate-700 text-yellow-400' : 'bg-white border-sky-100 text-sky-500'}`}>{isDark ? <Icons.Sun/> : <Icons.Moon/>}</button>
-                        <h1 className="text-2xl font-black text-sky-500 italic">English Magic</h1>
-                        <div className="w-10"></div>
+                    <header className="flex justify-between items-center h-14 mb-4 max-w-md mx-auto w-full">
+                        <button onClick={() => setIsDark(!isDark)} className={`w-11 h-11 rounded-2xl flex items-center justify-center border-2 shadow-sm ${isDark ? 'bg-slate-800 border-slate-700 text-yellow-400' : 'bg-white border-sky-100 text-sky-500'}`}>{isDark ? <Icons.Sun/> : <Icons.Moon/>}</button>
+                        <h1 className="text-2xl font-black text-sky-500 italic tracking-tighter">English Magic</h1>
+                        <div className="w-11"></div>
                     </header>
 
-                    <main className="flex-grow max-w-md mx-auto w-full">
+                    <main className="flex-grow max-w-md mx-auto w-full overflow-y-auto pb-10">
                         {view === 'setup' && (
                             <div className="space-y-6">
-                                <div className={`p-6 rounded-[2.5rem] shadow-xl border-2 flex flex-col ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-white'}`}>
-                                    <textarea id="words-input" className={`w-full h-48 p-4 rounded-2xl border-2 outline-none text-left font-black transition-all ${isDark ? 'bg-slate-950 border-slate-800 focus:border-yellow-500' : 'bg-sky-50 border-sky-100 focus:border-sky-400'}`} dir="ltr" placeholder="Apple - תפוח&#10;Book - ספר"></textarea>
-                                    <button onClick={start} className="w-full bg-sky-500 text-white py-4 rounded-2xl font-black text-xl shadow-lg mt-4 active:scale-95 transition-transform">התחל ללמוד</button>
+                                <div className={`p-6 rounded-[2.5rem] shadow-2xl border-2 flex flex-col ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-white'}`}>
+                                    <textarea id="words-input" className={`w-full h-52 p-5 rounded-3xl border-2 outline-none text-left font-black text-lg transition-all ${isDark ? 'bg-slate-950 border-slate-800 focus:border-yellow-500' : 'bg-sky-50 border-sky-100 focus:border-sky-400'}`} dir="ltr" placeholder="Apple - תפוח&#10;Book - ספר"></textarea>
+                                    <button onClick={start} className="w-full bg-sky-500 text-white py-5 rounded-3xl font-black text-2xl shadow-xl mt-6 active:scale-95 transition-transform">התחל ללמוד</button>
                                 </div>
                                 {savedLists.map(l => (
-                                    <div key={l.id} onClick={() => { setWordList(l.words); setView('learning'); }} className={`p-4 rounded-2xl shadow-sm flex justify-between items-center cursor-pointer border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-white'}`}>
-                                        <span className="font-black">{l.name} ({l.words.length})</span>
-                                        <button onClick={(e) => { e.stopPropagation(); db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('wordLists').doc(l.id).delete(); }} className="text-red-400 p-2"><Icons.Trash/></button>
+                                    <div key={l.id} onClick={() => { setWordList(l.words); setView('learning'); }} className={`p-5 rounded-3xl shadow-md flex justify-between items-center cursor-pointer border-2 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-sky-50'}`}>
+                                        <span className="font-black text-lg">{l.name}</span>
+                                        <button onClick={(e) => { e.stopPropagation(); db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('wordLists').doc(l.id).delete(); }} className="text-red-400 p-2 hover:bg-red-50 rounded-xl transition-colors"><Icons.Trash/></button>
                                     </div>
                                 ))}
                             </div>
                         )}
 
                         {view === 'learning' && <Flashcards words={wordList} onFinish={() => setView('gate')} isDark={isDark} />}
-                        {view === 'gate' && <KnowledgeGate words={wordList} onPass={() => setView('games')} onFail={(s) => setView('gate-failed')} isDark={isDark} />}
-                        {view === 'gate-failed' && <div className="text-center py-20 space-y-6"><div className="text-6xl">📉</div><h2 className="text-2xl font-black">לא עברת את המבחן</h2><button onClick={() => setView('learning')} className="w-full bg-sky-500 text-white py-4 rounded-2xl font-black">חזרה ללימוד</button></div>}
+                        {view === 'gate' && <KnowledgeGate words={wordList} onPass={() => setView('games')} onFail={() => setView('gate-failed')} isDark={isDark} />}
+                        {view === 'gate-failed' && <div className="text-center py-20 space-y-6 flex flex-col items-center"><div className="text-8xl mb-4">🧗</div><h2 className="text-3xl font-black italic">כמעט שם!</h2><p className="font-bold opacity-60">נחזור על המילים שוב ונעבור את המבחן.</p><button onClick={() => setView('learning')} className="w-full bg-sky-500 text-white py-5 rounded-3xl font-black text-xl shadow-lg">חזרה ללימוד</button></div>}
 
                         {view === 'games' && (
-                            <div className="flex flex-col space-y-4 py-6">
-                                <div className="bg-green-500 text-white p-6 rounded-3xl text-center shadow-lg"><h2 className="text-3xl font-black">הצלחת! 🥳</h2><p className="font-bold opacity-80">עברת את שלב הלימוד בהצלחה.</p></div>
-                                <button onClick={() => setView('memory')} className="w-full bg-indigo-500 text-white py-6 rounded-3xl font-black text-2xl shadow-xl active:scale-95">משחק הזיכרון 🧠</button>
-                                <button onClick={() => setView('spelling')} className="w-full bg-orange-500 text-white py-6 rounded-3xl font-black text-2xl shadow-xl active:scale-95">משחק הכתבה ✍️</button>
-                                <button onClick={() => setView('setup')} className="text-sky-500 font-bold p-4 text-center underline">חזרה לתפריט</button>
+                            <div className="flex flex-col space-y-5 py-6 px-2">
+                                <div className="bg-green-500 text-white p-8 rounded-[2.5rem] text-center shadow-xl transform rotate-1"><h2 className="text-4xl font-black italic">כל הכבוד! 🎉</h2><p className="font-bold opacity-90 mt-2 text-lg">עכשיו הגיע הזמן לשחק ולהשתפר</p></div>
+                                <button onClick={() => setView('memory')} className="w-full bg-indigo-600 text-white py-8 rounded-[2rem] font-black text-3xl shadow-2xl active:scale-95 transition-all">זיכרון 🧠</button>
+                                <button onClick={() => setView('spelling')} className="w-full bg-orange-500 text-white py-8 rounded-[2rem] font-black text-3xl shadow-2xl active:scale-95 transition-all">הכתבה ✍️</button>
+                                <button onClick={() => setView('setup')} className="text-sky-500 font-black p-4 text-center text-lg hover:underline underline-offset-8">חזרה לתפריט ראשי</button>
                             </div>
                         )}
 
