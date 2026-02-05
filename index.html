@@ -1,464 +1,312 @@
-import React, { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  signInAnonymously, 
-  onAuthStateChanged, 
-  signInWithCustomToken 
-} from 'firebase/auth';
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  onSnapshot, 
-  deleteDoc, 
-  doc 
-} from 'firebase/firestore';
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Magic</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & Babel for browser compilation -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        .perspective { perspective: 1000px; }
+        .preserve-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-/**
- * התאמה ל-GitHub:
- * בסביבת פיתוח אמיתית (כמו Vite), יש להשתמש ב-import.meta.env.VITE_FIREBASE_CONFIG
- * כאן השארתי את הלוגיקה שתעבוד גם בסביבה הנוכחית וגם כבסיס לפרויקט חיצוני.
- */
-const getFirebaseConfig = () => {
-  try {
-    // ניסיון לקרוא מהסביבה הנוכחית
-    if (typeof __firebase_config !== 'undefined') {
-      return JSON.parse(__firebase_config);
-    }
-  } catch (e) {
-    console.warn("Firebase config not found, please provide it in your environment variables.");
-  }
-  
-  // כאן תוכל להדביק את ה-Config שלך באופן ידני אם אתה מעלה ל-GitHub
-  return {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-};
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
 
-const firebaseConfig = getFirebaseConfig();
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+        // --- Firebase Setup ---
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
 
-// זיהוי App ID - ב-GitHub מומלץ להשתמש בערך קבוע או משתנה סביבה
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'english-magic-v2';
+        const getFinalConfig = () => {
+            try {
+                if (typeof __firebase_config !== 'undefined') return JSON.parse(__firebase_config);
+            } catch(e) {}
+            return firebaseConfig;
+        };
 
-// --- Icons (SVG) ---
-const Icons = {
-  Volume: ({ size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>,
-  Trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
-  Star: ({ color = "#FFD700", size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="white" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
-  Moon: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>,
-  Sun: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>,
-  Save: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-};
+        firebase.initializeApp(getFinalConfig());
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const appId = "english-magic-v2";
 
-const speak = (text) => {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.9;
-  window.speechSynthesis.speak(utterance);
-};
+        // --- Icons ---
+        const Icons = {
+            Volume: ({ size = 20 }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            ),
+            Trash: () => (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            ),
+            Moon: () => (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            ),
+            Sun: () => (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            ),
+            Save: () => (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            )
+        };
 
-// --- תתי רכיבים ---
+        const speak = (text) => {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        };
 
-const MemoryGame = ({ words, onSpeak, onBack, isDark }) => {
-  const [cards, setCards] = useState([]);
-  const [flipped, setFlipped] = useState([]);
-  const [matched, setMatched] = useState([]);
-  const [moves, setMoves] = useState(0);
-  const [isFinished, setIsFinished] = useState(false);
+        // --- Components ---
 
-  const initGame = () => {
-    const gameSize = Math.min(words.length, 6);
-    const selection = [...words].sort(() => 0.5 - Math.random()).slice(0, gameSize);
-    const deck = [];
-    selection.forEach(w => {
-      deck.push({ id: `${w.id}-eng`, wordId: w.id, text: w.eng, type: 'eng' });
-      deck.push({ id: `${w.id}-heb`, wordId: w.id, text: w.heb, type: 'heb' });
-    });
-    setCards(deck.sort(() => 0.5 - Math.random()));
-    setFlipped([]);
-    setMatched([]);
-    setMoves(0);
-    setIsFinished(false);
-  };
+        const MemoryGame = ({ words, onSpeak, onBack, isDark }) => {
+            const [cards, setCards] = useState([]);
+            const [flipped, setFlipped] = useState([]);
+            const [matched, setMatched] = useState([]);
+            const [moves, setMoves] = useState(0);
+            const [isFinished, setIsFinished] = useState(false);
 
-  useEffect(() => { initGame(); }, [words]);
+            const initGame = () => {
+                const gameSize = Math.min(words.length, 6);
+                const selection = [...words].sort(() => 0.5 - Math.random()).slice(0, gameSize);
+                const deck = [];
+                selection.forEach(w => {
+                    deck.push({ id: `${w.id}-eng`, wordId: w.id, text: w.eng, type: 'eng' });
+                    deck.push({ id: `${w.id}-heb`, wordId: w.id, text: w.heb, type: 'heb' });
+                });
+                setCards(deck.sort(() => 0.5 - Math.random()));
+                setFlipped([]);
+                setMatched([]);
+                setMoves(0);
+                setIsFinished(false);
+            };
 
-  const handleFlip = (card) => {
-    if (flipped.length === 2 || flipped.includes(card.id) || matched.includes(card.wordId)) return;
-    const newFlipped = [...flipped, card.id];
-    setFlipped(newFlipped);
-    if (newFlipped.length === 2) {
-      setMoves(m => m + 1);
-      const c1 = cards.find(c => c.id === newFlipped[0]);
-      const c2 = cards.find(c => c.id === newFlipped[1]);
-      if (c1.wordId === c2.wordId) {
-        setMatched([...matched, c1.wordId]);
-        setFlipped([]);
-        onSpeak(c1.type === 'eng' ? c1.text : c2.text);
-        if (matched.length + 1 === cards.length / 2) setIsFinished(true);
-      } else setTimeout(() => setFlipped([]), 1000);
-    }
-  };
+            useEffect(() => { initGame(); }, [words]);
 
-  if (isFinished) {
-    return (
-      <div className="flex flex-col h-full justify-center items-center text-center space-y-4" dir="rtl">
-        <h2 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-sky-900'}`}>אלוף הזיכרון! 🏆</h2>
-        <p className="text-sky-500 font-bold text-lg">סיימת ב-{moves} מהלכים.</p>
-        <button onClick={initGame} className="w-full max-w-xs bg-green-500 text-white py-4 rounded-2xl font-black text-xl shadow-lg">שחק שוב 🔁</button>
-        <button onClick={onBack} className="w-full max-w-xs bg-sky-500 text-white py-4 rounded-2xl font-black text-xl shadow-lg">חזרה לתפריט 🏠</button>
-      </div>
-    );
-  }
+            const handleFlip = (card) => {
+                if (flipped.length === 2 || flipped.includes(card.id) || matched.includes(card.wordId)) return;
+                const newFlipped = [...flipped, card.id];
+                setFlipped(newFlipped);
+                if (newFlipped.length === 2) {
+                    setMoves(m => m + 1);
+                    const c1 = cards.find(c => c.id === newFlipped[0]);
+                    const c2 = cards.find(c => c.id === newFlipped[1]);
+                    if (c1.wordId === c2.wordId) {
+                        setMatched([...matched, c1.wordId]);
+                        setFlipped([]);
+                        onSpeak(c1.type === 'eng' ? c1.text : c2.text);
+                        if (matched.length + 1 === cards.length / 2) setIsFinished(true);
+                    } else setTimeout(() => setFlipped([]), 1000);
+                }
+            };
 
-  return (
-    <div className="flex flex-col h-full" dir="rtl">
-      <div className="flex justify-between items-center mb-4 px-2">
-        <button onClick={onBack} className="text-sky-500 font-black">← חזור</button>
-        <div className="font-black text-sm opacity-60">צעדים: {moves}</div>
-      </div>
-      <div className="grid grid-cols-3 gap-2 flex-grow overflow-hidden content-center">
-        {cards.map(card => {
-          const isFlipped = flipped.includes(card.id) || matched.includes(card.wordId);
-          return (
-            <div key={card.id} className="aspect-square cursor-pointer" style={{ perspective: '1000px' }} onClick={() => handleFlip(card)}>
-              <div className={`relative w-full h-full transition-transform duration-500`} style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
-                <div className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-sky-100'} absolute inset-0 rounded-xl border-2 shadow flex items-center justify-center`} style={{ backfaceVisibility: 'hidden' }}>
-                   <div className="opacity-20"><Icons.Star size={16} /></div>
+            if (isFinished) {
+                return (
+                    <div className="flex flex-col h-full justify-center items-center text-center space-y-4">
+                        <h2 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-sky-900'}`}>אלוף הזיכרון! 🏆</h2>
+                        <p className="text-sky-500 font-bold text-lg">סיימת ב-{moves} מהלכים.</p>
+                        <button onClick={initGame} className="w-full max-w-xs bg-green-500 text-white py-4 rounded-2xl font-black text-xl shadow-lg">שחק שוב 🔁</button>
+                        <button onClick={onBack} className="w-full max-w-xs bg-sky-500 text-white py-4 rounded-2xl font-black text-xl shadow-lg">חזרה 🏠</button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="flex flex-col h-full">
+                    <div className="flex justify-between items-center mb-4 px-2">
+                        <button onClick={onBack} className="text-sky-500 font-black">← חזור</button>
+                        <div className="font-black text-sm opacity-60">צעדים: {moves}</div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 flex-grow content-center">
+                        {cards.map(card => {
+                            const isFlipped = flipped.includes(card.id) || matched.includes(card.wordId);
+                            return (
+                                <div key={card.id} className="aspect-square perspective cursor-pointer" onClick={() => handleFlip(card)}>
+                                    <div className={`relative w-full h-full preserve-3d transition-transform duration-500 ${isFlipped ? 'rotate-y-180' : ''}`}>
+                                        <div className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-sky-100'} absolute inset-0 rounded-xl border-2 shadow flex items-center justify-center backface-hidden`}>
+                                           <div className="opacity-20 text-sky-400 font-black">?</div>
+                                        </div>
+                                        <div className={`${isDark ? 'bg-slate-700 border-slate-500' : 'bg-white border-sky-300'} absolute inset-0 border-2 rounded-xl flex items-center justify-center backface-hidden rotate-y-180 shadow-inner overflow-hidden`}>
+                                            <span className={`text-[10px] md:text-sm font-black text-center px-1 break-words ${card.type === 'eng' ? 'text-indigo-500' : 'text-pink-500'}`}>
+                                                {card.text}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-                <div className={`${isDark ? 'bg-slate-700 border-slate-500' : 'bg-white border-sky-300'} absolute inset-0 border-2 rounded-xl flex items-center justify-center shadow-inner overflow-hidden`} style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-                  <span className={`text-[10px] md:text-sm font-black text-center px-1 break-words ${card.type === 'eng' ? 'text-indigo-500' : 'text-pink-500'}`}>
-                    {card.text}
-                  </span>
+            );
+        };
+
+        const SpellingGame = ({ words, onSpeak, onBack, isDark }) => {
+            const [queue, setQueue] = useState([]);
+            const [idx, setIdx] = useState(0);
+            const [input, setInput] = useState("");
+            const [status, setStatus] = useState("playing");
+
+            useEffect(() => { setQueue([...words].sort(() => Math.random() - 0.5)); }, [words]);
+            const current = queue[idx];
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (input.toLowerCase().trim() === current.eng.toLowerCase().trim()) {
+                    setStatus("correct");
+                    onSpeak(current.eng);
+                    setTimeout(() => {
+                        if (idx + 1 < queue.length) { setIdx(idx + 1); setInput(""); setStatus("playing"); }
+                        else setStatus("finished");
+                    }, 800);
+                } else {
+                    setStatus("wrong");
+                    setTimeout(() => setStatus("playing"), 800);
+                }
+            };
+
+            if (status === "finished") {
+                return (
+                    <div className="flex flex-col h-full justify-center items-center text-center space-y-6">
+                        <h2 className={`text-4xl font-black ${isDark ? 'text-white' : 'text-sky-900'}`}>מלך ההכתבות! 👑</h2>
+                        <button onClick={onBack} className="w-full max-w-xs bg-sky-500 text-white py-4 rounded-2xl font-black text-xl shadow-lg">חזרה לתפריט</button>
+                    </div>
+                );
+            }
+            if (!current) return null;
+
+            return (
+                <div className="flex flex-col h-full">
+                    <div className="flex justify-between items-center mb-4">
+                        <button onClick={onBack} className="text-sky-500 font-black">חזור</button>
+                        <span className="text-xs opacity-50 font-black" dir="ltr">{idx + 1} / {queue.length}</span>
+                    </div>
+                    <div className="flex-grow flex flex-col items-center justify-center space-y-4">
+                        <h3 className={`text-3xl font-black ${isDark ? 'text-sky-200' : 'text-sky-900'}`}>{current.heb}</h3>
+                        <button onClick={() => onSpeak(current.eng)} className="p-6 bg-sky-500 text-white rounded-full shadow-lg">
+                            <Icons.Volume size={32} />
+                        </button>
+                        <form onSubmit={handleSubmit} className="w-full max-w-xs pt-4">
+                            <input autoFocus className={`w-full p-4 text-center text-2xl font-black rounded-2xl border-4 mb-3 outline-none ${status === 'correct' ? 'border-green-400 bg-green-50' : status === 'wrong' ? 'border-red-400 bg-red-50' : isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-sky-50 border-sky-100'}`} placeholder="..." value={input} onChange={(e) => setInput(e.target.value)} dir="ltr" />
+                            <button className="w-full bg-indigo-500 text-white py-3 rounded-xl font-black">בדוק!</button>
+                        </form>
+                    </div>
                 </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+            );
+        };
 
-const SpellingGame = ({ words, onSpeak, onBack, isDark }) => {
-  const [queue, setQueue] = useState([]);
-  const [idx, setIdx] = useState(0);
-  const [input, setInput] = useState("");
-  const [status, setStatus] = useState("playing");
+        // --- Main App ---
 
-  useEffect(() => {
-    setQueue([...words].sort(() => Math.random() - 0.5));
-  }, [words]);
+        const App = () => {
+            const [view, setView] = useState('setup');
+            const [wordList, setWordList] = useState([]);
+            const [isDarkMode, setIsDarkMode] = useState(false);
+            const [user, setUser] = useState(null);
+            const [savedLists, setSavedLists] = useState([]);
+            const [listName, setListName] = useState("");
 
-  const current = queue[idx];
+            useEffect(() => {
+                const unsub = auth.onAuthStateChanged(u => {
+                    if (u) setUser(u);
+                    else auth.signInAnonymously();
+                });
+                return () => unsub();
+            }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (input.toLowerCase().trim() === current.eng.toLowerCase().trim()) {
-      setStatus("correct");
-      onSpeak(current.eng);
-      setTimeout(() => {
-        if (idx + 1 < queue.length) {
-          setIdx(idx + 1);
-          setInput("");
-          setStatus("playing");
-        } else setStatus("finished");
-      }, 800);
-    } else {
-      setStatus("wrong");
-      setTimeout(() => setStatus("playing"), 800);
-    }
-  };
+            useEffect(() => {
+                if (!user) return;
+                const unsub = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('wordLists')
+                    .onSnapshot(snap => setSavedLists(snap.docs.map(d => ({...d.data(), id: d.id}))));
+                return () => unsub();
+            }, [user]);
 
-  if (status === "finished") {
-    return (
-      <div className="flex flex-col h-full justify-center items-center text-center space-y-6" dir="rtl">
-        <h2 className={`text-4xl font-black ${isDark ? 'text-white' : 'text-sky-900'}`}>מלך ההכתבות! 👑</h2>
-        <button onClick={onBack} className="w-full max-w-xs bg-sky-500 text-white py-4 rounded-2xl font-black text-xl shadow-lg">חזרה לתפריט</button>
-      </div>
-    );
-  }
+            const startLearning = () => {
+                const input = document.getElementById('word-input').value;
+                const parsed = input.split('\n').map(l => {
+                    const parts = l.split(/[,\t\-:|]+/).map(p => p.trim());
+                    return parts.length >= 2 ? { eng: parts[0], heb: parts[1], id: Math.random().toString(36).substr(2,9) } : null;
+                }).filter(Boolean);
+                if (parsed.length) { setWordList(parsed); setView('games'); }
+            };
 
-  if (!current) return null;
+            return (
+                <div className={`${isDarkMode ? 'bg-slate-950 text-white' : 'bg-sky-50 text-slate-900'} min-h-screen transition-colors duration-500 p-4`}>
+                    <div className="max-w-md mx-auto">
+                        <div className="relative flex items-center justify-center mb-6 h-12">
+                            <h1 className={`text-3xl font-black tracking-tighter ${isDarkMode ? 'text-sky-400' : 'text-sky-600'}`}>English Magic</h1>
+                            <button 
+                                onClick={() => setIsDarkMode(!isDarkMode)} 
+                                className={`absolute left-0 w-10 h-10 flex items-center justify-center rounded-xl shadow-md transition-all active:scale-95 ${
+                                    isDarkMode ? 'bg-slate-800 text-yellow-400 border border-slate-700' : 'bg-white text-indigo-600 border border-sky-50'
+                                }`}
+                                title={isDarkMode ? "Light Mode" : "Dark Mode"}
+                            >
+                                {isDarkMode ? <Icons.Sun /> : <Icons.Moon />}
+                            </button>
+                        </div>
 
-  return (
-    <div className="flex flex-col h-full" dir="rtl">
-      <div className="flex justify-between items-center mb-4">
-         <button onClick={onBack} className="text-sky-500 font-black">חזור</button>
-         <span className="text-xs opacity-50 font-black" dir="ltr">{idx + 1} / {queue.length}</span>
-      </div>
-      <div className="flex-grow flex flex-col items-center justify-center space-y-4">
-        <h3 className={`text-3xl font-black ${isDark ? 'text-sky-200' : 'text-sky-900'}`}>{current.heb}</h3>
-        <button onClick={() => onSpeak(current.eng)} className="p-6 bg-sky-500 text-white rounded-full shadow-lg hover:scale-105 active:scale-95 transition">
-          <Icons.Volume size={32} />
-        </button>
-        <form onSubmit={handleSubmit} className="w-full max-w-xs pt-4">
-          <input 
-            autoFocus
-            className={`w-full p-4 text-center text-2xl font-black rounded-2xl border-4 mb-3 outline-none transition-colors ${
-              status === 'correct' ? 'border-green-400 bg-green-50' : 
-              status === 'wrong' ? 'border-red-400 bg-red-50' : 
-              isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-sky-50 border-sky-100'
-            }`}
-            placeholder="..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            dir="ltr"
-          />
-          <button className="w-full bg-indigo-500 text-white py-3 rounded-xl font-black hover:bg-indigo-600 transition">בדוק!</button>
-        </form>
-      </div>
-    </div>
-  );
-};
+                        {view === 'setup' && (
+                            <div className="space-y-4">
+                                <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-white'} p-6 rounded-3xl shadow-xl border-2`}>
+                                    <textarea id="word-input" className={`w-full h-32 p-3 rounded-xl border-2 outline-none text-left font-bold mb-4 ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-sky-50 border-sky-100'}`} dir="ltr" placeholder="Apple - תפוח..."></textarea>
+                                    <button onClick={startLearning} className="w-full bg-sky-500 text-white py-4 rounded-xl font-black text-xl shadow-lg">בואו נתחיל!</button>
+                                </div>
+                                <div className="space-y-2">
+                                    {savedLists.map(list => (
+                                        <div key={list.id} onClick={() => { setWordList(list.words); setView('games'); }} className={`${isDarkMode ? 'bg-slate-900' : 'bg-white'} p-4 rounded-xl shadow flex justify-between cursor-pointer`}>
+                                            <span className="font-black">{list.name} ({list.words.length})</span>
+                                            <button onClick={(e) => { e.stopPropagation(); db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('wordLists').doc(list.id).delete(); }} className="text-red-400"><Icons.Trash /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
-const QuizView = ({ words, onPass, onFail, onSpeak, isDark }) => {
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [score, setScore] = useState(0);
-  const [questions, setQuestions] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [isCorrect, setIsCorrect] = useState(null);
+                        {view === 'games' && (
+                            <div className="flex flex-col space-y-4">
+                                <button onClick={() => setView('memory-game')} className="bg-indigo-500 p-10 rounded-3xl text-white font-black text-2xl shadow-xl">זיכרון 🧠</button>
+                                <button onClick={() => setView('spelling-game')} className="bg-pink-500 p-10 rounded-3xl text-white font-black text-2xl shadow-xl">הכתבה ✍️</button>
+                                <div className="pt-6 border-t border-slate-300 flex gap-2">
+                                    <input className={`flex-1 p-3 rounded-xl border-2 ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`} placeholder="שם לשמירה..." value={listName} onChange={e => setListName(e.target.value)} />
+                                    <button onClick={() => {
+                                        if(!listName) return;
+                                        db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('wordLists').add({ name: listName, words: wordList });
+                                        setListName("");
+                                    }} className="bg-green-500 text-white p-3 rounded-xl"><Icons.Save /></button>
+                                </div>
+                                <button onClick={() => setView('setup')} className="text-sky-500 font-bold">חזרה למסך הראשי</button>
+                            </div>
+                        )}
 
-  useEffect(() => {
-    const q = words.map(w => {
-      const others = words.filter(item => item.id !== w.id).sort(() => 0.5 - Math.random()).slice(0, 3);
-      return { question: w.eng, answer: w.heb, id: w.id, options: [...others, w].sort(() => 0.5 - Math.random()) };
-    }).sort(() => 0.5 - Math.random());
-    setQuestions(q);
-  }, [words]);
-
-  const handleAnswer = (optId) => {
-    if (selected !== null) return;
-    const correct = optId === questions[currentIdx].id;
-    setSelected(optId);
-    setIsCorrect(correct);
-    if (correct) { setScore(s => s + 1); onSpeak(questions[currentIdx].question); }
-    setTimeout(() => {
-      if (currentIdx + 1 < questions.length) { setCurrentIdx(currentIdx + 1); setSelected(null); setIsCorrect(null); }
-      else { if (score + (correct ? 1 : 0) >= questions.length * 0.75) onPass(); else onFail(); }
-    }, 600);
-  };
-
-  if (!questions.length) return null;
-  const current = questions[currentIdx];
-
-  return (
-    <div className="flex flex-col h-full py-2" dir="rtl">
-      <div className="flex justify-center mb-6">
-        <div className="bg-sky-500/10 px-4 py-1 rounded-full text-xs font-black text-sky-500">
-           שאלה {currentIdx + 1} מתוך {questions.length}
-        </div>
-      </div>
-      <h3 className="text-3xl font-black text-center mb-8" dir="ltr">{current.question}</h3>
-      <div className="grid grid-cols-2 gap-3 flex-grow content-center">
-        {current.options.map(opt => (
-          <button 
-            key={opt.id} 
-            onClick={() => handleAnswer(opt.id)}
-            className={`p-4 rounded-xl text-sm font-black border-2 transition h-20 flex items-center justify-center ${
-              selected === opt.id ? (isCorrect ? 'bg-green-500 border-green-600 text-white' : 'bg-red-500 border-red-600 text-white') : 
-              (isDark ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-sky-100 hover:bg-sky-50')
-            }`}
-          >{opt.heb}</button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const LearningView = ({ words, known, onUpdateKnown, onSpeak, onFinish, isDark }) => {
-  const [queue, setQueue] = useState([]);
-  const [idx, setIdx] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-
-  useEffect(() => {
-    const missing = words.filter(w => !known.find(k => k.id === w.id));
-    setQueue(missing.length ? [...missing].sort(() => Math.random() - 0.5) : []);
-    setIdx(0);
-  }, [words]);
-
-  if (!queue.length || idx >= queue.length) {
-    return (
-      <div className="flex flex-col h-full justify-center items-center text-center space-y-6" dir="rtl">
-        <h2 className="text-3xl font-black">סיימת ללמוד! ✨</h2>
-        <button onClick={onFinish} className="w-full max-w-xs bg-indigo-500 text-white py-5 rounded-2xl font-black text-xl shadow-xl hover:bg-indigo-600 transition">בואו נבחן! 🪄</button>
-      </div>
-    );
-  }
-
-  const current = queue[idx];
-
-  return (
-    <div className="flex flex-col h-full items-center justify-between py-4" dir="rtl">
-      <div className="w-full max-w-[220px] aspect-[4/5] cursor-pointer" style={{ perspective: '1000px' }} onClick={() => setFlipped(!flipped)}>
-        <div className="relative w-full h-full transition-transform duration-500" style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
-          <div className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-sky-100'} absolute inset-0 rounded-[2.5rem] border-[8px] flex flex-col items-center justify-center shadow-xl`} style={{ backfaceVisibility: 'hidden' }}>
-             <span className="text-4xl font-black mb-6" dir="ltr">{current.eng}</span>
-             <button onClick={(e) => { e.stopPropagation(); onSpeak(current.eng); }} className="p-3 bg-sky-500 text-white rounded-full"><Icons.Volume size={24} /></button>
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-br from-sky-400 to-indigo-500 rounded-[2.5rem] border-[8px] border-white flex items-center justify-center rotate-y-180 shadow-xl" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-            <span className="text-4xl font-black text-white px-2 text-center">{current.heb}</span>
-          </div>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4 w-full pt-4">
-        <button onClick={() => { setFlipped(false); setIdx(idx + 1); }} className="bg-slate-200 text-slate-600 p-4 rounded-2xl font-black hover:bg-slate-300">עוד לא..</button>
-        <button onClick={() => { onUpdateKnown([...known, current]); setFlipped(false); setIdx(idx + 1); }} className="bg-sky-500 text-white p-4 rounded-2xl font-black hover:bg-sky-600">יודע!</button>
-      </div>
-    </div>
-  );
-};
-
-// --- App Main ---
-
-const App = () => {
-  const [view, setView] = useState('setup');
-  const [wordList, setWordList] = useState([]);
-  const [knownWords, setKnownWords] = useState([]);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [user, setUser] = useState(null);
-  const [savedLists, setSavedLists] = useState([]);
-  const [listName, setListName] = useState("");
-
-  // Firebase Auth
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (err) {
-        console.error("Auth Error:", err);
-      }
-    };
-    initAuth();
-    const unsub = onAuthStateChanged(auth, setUser);
-    return () => unsub();
-  }, []);
-
-  // Listen to Firestore
-  useEffect(() => {
-    if (!user) return;
-    const q = collection(db, 'artifacts', appId, 'users', user.uid, 'wordLists');
-    const unsub = onSnapshot(q, (snapshot) => {
-      setSavedLists(snapshot.docs.map(d => ({ ...d.data(), id: d.id })));
-    }, (err) => console.error("Firestore Listen Error:", err));
-    return () => unsub();
-  }, [user]);
-
-  const handleSaveList = async () => {
-    if (!wordList.length || !listName || !user) return;
-    try {
-      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'wordLists'), {
-        name: listName,
-        words: wordList,
-        createdAt: Date.now()
-      });
-      setListName("");
-    } catch (err) {
-      console.error("Save Error:", err);
-    }
-  };
-
-  const handleDeleteList = async (e, id) => {
-    e.stopPropagation();
-    try {
-      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'wordLists', id));
-    } catch (err) {
-      console.error("Delete Error:", err);
-    }
-  };
-
-  return (
-    <div className={`${isDarkMode ? 'dark bg-slate-950 text-white' : 'bg-sky-50 text-slate-900'} h-[100dvh] transition-colors duration-500 font-sans p-4 overflow-hidden`} dir="rtl">
-      <div className="max-w-md mx-auto h-full flex flex-col">
-        
-        {/* Header */}
-        <div className="relative flex items-center justify-center mb-4 shrink-0 h-10">
-           <h1 className={`text-2xl font-black tracking-tighter ${isDarkMode ? 'text-sky-400' : 'text-sky-600'}`}>English Magic</h1>
-           <button 
-             onClick={() => setIsDarkMode(!isDarkMode)} 
-             className={`absolute left-0 p-2 rounded-full transition-all ${isDarkMode ? 'bg-slate-800 text-yellow-400' : 'bg-white shadow text-indigo-600'}`}
-           >
-             {isDarkMode ? <Icons.Sun /> : <Icons.Moon />}
-           </button>
-        </div>
-
-        <main className="flex-grow overflow-hidden relative">
-          {view === 'setup' && (
-            <div className="h-full flex flex-col">
-              <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-white'} p-6 rounded-3xl shadow-xl border-2 shrink-0 mb-4`}>
-                <textarea 
-                  className={`w-full h-24 p-3 rounded-xl border-2 outline-none text-left font-bold text-base mb-2 transition-colors ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-sky-50 border-sky-100'}`}
-                  dir="ltr"
-                  placeholder="Apple - תפוח..."
-                  id="word-input"
-                ></textarea>
-                <button 
-                  onClick={() => {
-                    const input = document.getElementById('word-input').value;
-                    const parsed = input.split('\n').map(l => {
-                      const parts = l.split(/[,\t\-:|]+/).map(p => p.trim());
-                      return parts.length >= 2 ? { eng: parts[0], heb: parts[1], id: Math.random().toString(36).substr(2,9) } : null;
-                    }).filter(Boolean);
-                    if (parsed.length) { setWordList(parsed); setView('learning'); }
-                  }}
-                  className="w-full bg-sky-500 text-white py-3 rounded-xl font-black text-lg hover:bg-sky-600 transition-colors"
-                >בואו נתחיל!</button>
-              </div>
-
-              <div className="flex-grow overflow-y-auto space-y-2 pb-4">
-                {savedLists.length > 0 && <p className="text-xs font-black opacity-40 mb-1 px-1">רשימות שמורות:</p>}
-                {savedLists.map(list => (
-                  <div key={list.id} onClick={() => { setWordList(list.words); setView('learning'); }} className={`${isDarkMode ? 'bg-slate-900 hover:bg-slate-800' : 'bg-white hover:bg-sky-50'} p-3 rounded-xl shadow-sm flex justify-between items-center transition-all cursor-pointer`}>
-                    <span className="font-black text-sm">{list.name} ({list.words.length})</span>
-                    <button onClick={(e) => handleDeleteList(e, list.id)} className="text-red-300 p-1 hover:text-red-500 transition-colors"><Icons.Trash /></button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {view === 'learning' && <LearningView isDark={isDarkMode} words={wordList} known={knownWords} onUpdateKnown={setKnownWords} onSpeak={speak} onFinish={() => setView('quiz')} />}
-          {view === 'quiz' && <QuizView isDark={isDarkMode} words={wordList} onPass={() => setView('games')} onFail={() => { setKnownWords([]); setView('learning'); }} onSpeak={speak} />}
-          
-          {view === 'games' && (
-            <div className="h-full flex flex-col justify-center space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                <button onClick={() => setView('memory-game')} className="bg-indigo-500 p-8 rounded-3xl text-white font-black text-2xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition">זיכרון</button>
-                <button onClick={() => setView('spelling-game')} className="bg-pink-500 p-8 rounded-3xl text-white font-black text-2xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition">הכתבה</button>
-              </div>
-              <div className="pt-6 border-t border-slate-700/10 space-y-3">
-                <div className="flex gap-2">
-                  <input className={`flex-1 p-3 rounded-xl border-2 outline-none font-bold text-sm transition-colors ${isDarkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-sky-100'}`} placeholder="שם לרשימה..." value={listName} onChange={(e) => setListName(e.target.value)} />
-                  <button onClick={handleSaveList} className="bg-green-500 text-white p-3 rounded-xl shadow-lg font-black hover:bg-green-600 transition"><Icons.Save /></button>
+                        {view === 'memory-game' && <MemoryGame words={wordList} onSpeak={speak} onBack={() => setView('games')} isDark={isDarkMode} />}
+                        {view === 'spelling-game' && <SpellingGame words={wordList} onSpeak={speak} onBack={() => setView('games')} isDark={isDarkMode} />}
+                    </div>
                 </div>
-                <button onClick={() => { setWordList([]); setKnownWords([]); setView('setup'); }} className="w-full py-3 text-red-400 font-black border border-red-400/20 rounded-xl hover:bg-red-500/5 transition">איפוס והתחלה מחדש 🗑️</button>
-              </div>
-            </div>
-          )}
+            );
+        };
 
-          {view === 'memory-game' && <MemoryGame isDark={isDarkMode} words={wordList} onSpeak={speak} onBack={() => setView('games')} />}
-          {view === 'spelling-game' && <SpellingGame isDark={isDarkMode} words={wordList} onSpeak={speak} onBack={() => setView('games')} />}
-
-        </main>
-      </div>
-    </div>
-  );
-};
-
-export default App;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
 
