@@ -1,573 +1,489 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Volume2, Moon, Sun, Trophy, 
-  RotateCcw, ChevronDown, 
-  Layers, Keyboard, LayoutGrid,
-  ThumbsUp, ThumbsDown, Brain,
-  Unlock, User, Users, Home, RefreshCw,
-  BookOpen, Edit3
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Learning Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&family=Comic+Neue:wght@400;700&display=swap');
 
-// --- Utilities ---
-const speak = (text) => {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.8;
-  window.speechSynthesis.speak(utterance);
-};
-
-const fireConfetti = () => {
-  if (window.confetti) {
-    const duration = 3 * 1000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-    const randomInRange = (min, max) => Math.random() * (max - min) + min;
-
-    const interval = setInterval(function() {
-      const timeLeft = animationEnd - Date.now();
-      if (timeLeft <= 0) return clearInterval(interval);
-      const particleCount = 50 * (timeLeft / duration);
-      window.confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-      window.confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
-    }, 250);
-  }
-};
-
-const GameOverMenu = ({ onRestart, onBackToGames, onResetApp, title, subtitle, isDark }) => {
-  useEffect(() => {
-    if (title.includes("ניצחת") || title.includes("סיימת")) fireConfetti();
-  }, [title]);
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md p-6 text-center font-comic">
-      <div className="max-w-sm w-full animate-in zoom-in duration-300">
-        <Trophy className="w-20 h-20 text-yellow-400 mx-auto mb-4" />
-        <h2 className="text-4xl font-bold text-white mb-2">{title}</h2>
-        {subtitle && <p className="text-sky-300 text-xl mb-6">{subtitle}</p>}
-        
-        <div className="grid gap-3 mt-6">
-          <button onClick={onRestart} className="flex items-center justify-center gap-2 bg-sky-500 text-white py-4 rounded-2xl font-bold text-xl shadow-lg active:scale-95 transition-transform">
-            <RefreshCw size={24} /> שחק שוב
-          </button>
-          <button onClick={onBackToGames} className="flex items-center justify-center gap-2 bg-emerald-500 text-white py-4 rounded-2xl font-bold text-xl shadow-lg active:scale-95 transition-transform">
-            <LayoutGrid size={24} /> משחקים אחרים
-          </button>
-          <button onClick={onResetApp} className="flex items-center justify-center gap-2 bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-transform">
-            <Edit3 size={24} /> עריכת מילים / איפוס
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- Quiz Component ---
-const Quiz = ({ words, onPass, onFail, isDark }) => {
-  const [idx, setIdx] = useState(0);
-  const [score, setScore] = useState(0);
-  const [options, setOptions] = useState([]);
-  const [selected, setSelected] = useState(null);
-
-  useEffect(() => {
-    if (idx < words.length) {
-      const current = words[idx];
-      const others = words.filter(w => w.id !== current.id).sort(() => 0.5 - Math.random()).slice(0, 3);
-      setOptions([...others, current].sort(() => 0.5 - Math.random()));
-      setSelected(null);
-    }
-  }, [idx, words]);
-
-  const handleSelect = (id) => {
-    if (selected) return;
-    setSelected(id);
-    if (id === words[idx].id) setScore(s => s + 1);
-    setTimeout(() => setIdx(idx + 1), 1000);
-  };
-
-  if (idx >= words.length) {
-    const passed = score / words.length >= 0.7;
-    return (
-      <div className={`${isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'} p-8 rounded-3xl shadow-xl text-center font-comic`}>
-        <h2 className="text-3xl font-bold mb-4">סיכום מבדק</h2>
-        <div className="text-6xl font-bold text-sky-500 mb-6">{score} / {words.length}</div>
-        {passed ? (
-          <>
-            <p className="text-emerald-500 text-xl font-bold mb-6 italic">מעולה! המשחקים פתוחים!</p>
-            <button onClick={onPass} className="w-full bg-emerald-500 text-white py-4 rounded-xl font-bold text-xl flex items-center justify-center gap-2">
-              <Unlock /> כניסה למשחקים
-            </button>
-          </>
-        ) : (
-          <>
-            <p className="text-rose-500 text-xl font-bold mb-6">צריך לפחות 70% כדי להמשיך. כדאי לחזור על המילים!</p>
-            <button onClick={onFail} className="w-full bg-sky-500 text-white py-4 rounded-xl font-bold text-xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform">
-              <BookOpen /> חזרה ללימוד מילים
-            </button>
-          </>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full max-w-sm mx-auto font-comic">
-      <div className="text-center mb-6">
-        <span className="text-sky-500 font-bold">שאלה {idx + 1} מתוך {words.length}</span>
-        <div className={`mt-4 p-8 rounded-2xl shadow-inner text-4xl font-bold ${isDark ? 'bg-slate-800' : 'bg-sky-50'}`}>
-          {words[idx].eng}
-        </div>
-      </div>
-      <div className="grid gap-3">
-        {options.map(opt => (
-          <button key={opt.id} onClick={() => handleSelect(opt.id)}
-            className={`p-4 rounded-xl border-2 text-right font-bold transition-all ${
-              selected === opt.id 
-                ? (opt.id === words[idx].id ? 'bg-emerald-500 border-emerald-600 text-white shadow-lg' : 'bg-rose-500 border-rose-600 text-white shadow-lg')
-                : (isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-sky-100 text-slate-800')
-            }`}>
-            {opt.heb}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// --- Memory Game ---
-const MemoryGame = ({ words, onBack, onResetApp, isDark }) => {
-  const [mode, setMode] = useState(null); 
-  const [cards, setCards] = useState([]);
-  const [flipped, setFlipped] = useState([]);
-  const [solved, setSolved] = useState([]);
-  const [turns, setTurns] = useState(0);
-  const [scores, setScores] = useState({ p1: 0, p2: 0 });
-  const [currentPlayer, setCurrentPlayer] = useState(1);
-  const [gameOver, setGameOver] = useState(false);
-
-  const initGame = (selectedMode) => {
-    const items = [];
-    const selection = words.length > 6 ? words.sort(() => 0.5 - Math.random()).slice(0, 6) : words;
-    selection.forEach(w => {
-      items.push({ id: `e-${w.id}`, val: w.eng, pairId: w.id, type: 'eng' });
-      items.push({ id: `h-${w.id}`, val: w.heb, pairId: w.id, type: 'heb' });
-    });
-    setCards(items.sort(() => Math.random() - 0.5));
-    setMode(selectedMode);
-    setSolved([]);
-    setFlipped([]);
-    setTurns(0);
-    setScores({ p1: 0, p2: 0 });
-    setGameOver(false);
-  };
-
-  const handleFlip = (c) => {
-    if (flipped.length === 2 || solved.includes(c.pairId) || flipped.includes(c.id)) return;
-    const next = [...flipped, c.id];
-    setFlipped(next);
-    
-    if (next.length === 2) {
-      setTurns(t => t + 1);
-      const c1 = cards.find(x => x.id === next[0]);
-      const c2 = cards.find(x => x.id === next[1]);
-      
-      if (c1.pairId === c2.pairId) {
-        setSolved(prev => {
-          const newSolved = [...prev, c1.pairId];
-          if (newSolved.length === cards.length / 2) setGameOver(true);
-          return newSolved;
-        });
-        if (mode === 'duo') {
-          setScores(s => ({ ...s, [`p${currentPlayer}`]: s[`p${currentPlayer}`] + 1 }));
+        body {
+            font-family: 'Comic Neue', 'Assistant', 'Arial', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
         }
-        setFlipped([]);
-      } else {
-        setTimeout(() => {
-          setFlipped([]);
-          if (mode === 'duo') setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
-        }, 1200);
-      }
-    }
-  };
 
-  if (!mode) return (
-    <div className="flex flex-col gap-4 text-center font-comic">
-      <h2 className="text-2xl font-bold">בחר מצב משחק:</h2>
-      <button onClick={() => initGame('solo')} className="p-6 bg-sky-500 text-white rounded-3xl font-bold text-xl flex items-center justify-center gap-3"><User size={28}/> שחקן יחיד</button>
-      <button onClick={() => initGame('duo')} className="p-6 bg-purple-500 text-white rounded-3xl font-bold text-xl flex items-center justify-center gap-3"><Users size={28}/> שני שחקנים</button>
-      <button onClick={onBack} className="text-slate-400 mt-4 underline">חזרה</button>
-    </div>
-  );
+        .eng-text { font-family: 'Comic Neue', 'Arial', sans-serif; letter-spacing: 0.02em; }
 
-  return (
-    <div className="w-full max-w-sm mx-auto font-comic">
-      <div className="flex justify-between items-center mb-4 px-2">
-        {mode === 'solo' ? (
-          <div className="bg-sky-100 text-sky-600 px-4 py-2 rounded-full font-bold">צעדים: {turns}</div>
-        ) : (
-          <>
-            <div className={`px-4 py-2 rounded-xl font-bold ${currentPlayer === 1 ? 'bg-sky-500 text-white scale-110' : 'bg-slate-200 text-slate-500'} transition-all`}>שחקן 1: {scores.p1}</div>
-            <div className={`px-4 py-2 rounded-xl font-bold ${currentPlayer === 2 ? 'bg-purple-500 text-white scale-110' : 'bg-slate-200 text-slate-500'} transition-all`}>שחקן 2: {scores.p2}</div>
-          </>
-        )}
-      </div>
+        /* Night Mode */
+        body.night-mode { background-color: #1a202c !important; color: #f7fafc !important; }
+        .night-mode .bg-white, .night-mode .bg-blue-50, .night-mode .bg-purple-50 {
+            background-color: #2d3748 !important; color: #ffffff !important;
+        }
+        .night-mode h1, .night-mode h2, .night-mode h3, .night-mode p, .night-mode span, .night-mode .text-black, .night-mode .text-gray-800 {
+            color: #ffffff !important;
+        }
+        .night-mode textarea { background-color: #2d3748 !important; color: white !important; border-color: #4a5568 !important; }
 
-      <div className="grid grid-cols-3 gap-2">
-        {cards.map(c => (
-          <div key={c.id} onClick={() => handleFlip(c)} className="aspect-square perspective-1000 cursor-pointer">
-            <div className={`relative w-full h-full transition-all duration-500 transform-style-3d ${flipped.includes(c.id) || solved.includes(c.pairId) ? 'rotate-y-180' : ''}`}>
-              <div className={`absolute inset-0 backface-hidden rounded-xl border-2 flex items-center justify-center text-3xl shadow-md ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-sky-100 text-sky-500'}`}>?</div>
-              <div className={`absolute inset-0 backface-hidden rotate-y-180 rounded-xl flex items-center justify-center p-2 text-center font-bold text-sm shadow-inner ${solved.includes(c.pairId) ? 'bg-emerald-500' : 'bg-sky-500'} text-white`}>
-                {c.val}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      {gameOver && (
-        <GameOverMenu 
-          onRestart={() => initGame(mode)} 
-          onBackToGames={onBack} 
-          onResetApp={onResetApp}
-          title={mode === 'solo' ? "סיימת הכל!" : (scores.p1 > scores.p2 ? "שחקן 1 ניצח!" : scores.p2 > scores.p1 ? "שחקן 2 ניצח!" : "תיקו!")}
-          subtitle={mode === 'solo' ? `ב-${turns} צעדים. נסה להשתפר!` : ""}
-          isDark={isDark}
-        />
-      )}
-    </div>
-  );
-};
-
-// --- Connect Four ---
-const ConnectFour = ({ words, onBack, onResetApp, isDark }) => {
-  const ROWS = 6; const COLS = 7;
-  const [mode, setMode] = useState(null);
-  const [board, setBoard] = useState(Array(ROWS).fill(null).map(() => Array(COLS).fill(null)));
-  const [currentPlayer, setCurrentPlayer] = useState(1);
-  const [winner, setWinner] = useState(null);
-  const [activeQuestion, setActiveQuestion] = useState(null);
-  const [options, setOptions] = useState([]);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [animatingCell, setAnimatingCell] = useState(null);
-
-  const initGame = (m) => {
-    setMode(m);
-    setBoard(Array(ROWS).fill(null).map(() => Array(COLS).fill(null)));
-    setCurrentPlayer(1);
-    setWinner(null);
-    newQuestion();
-  };
-
-  const newQuestion = () => {
-    const w = words[Math.floor(Math.random() * words.length)];
-    const others = words.filter(x => x.id !== w.id).sort(() => 0.5 - Math.random()).slice(0, 3);
-    setOptions([...others, w].sort(() => 0.5 - Math.random()));
-    setActiveQuestion(w);
-  };
-
-  const drop = async (col, player) => {
-    if (isAnimating || board[0][col]) return;
-    setIsAnimating(true);
-    let targetRow = -1;
-    for (let r = ROWS - 1; r >= 0; r--) if (!board[r][col]) { targetRow = r; break; }
-    
-    for (let r = 0; r <= targetRow; r++) {
-      setAnimatingCell({ r, c: col, player });
-      await new Promise(res => setTimeout(res, 120));
-    }
-    
-    const nextBoard = board.map(row => [...row]);
-    nextBoard[targetRow][col] = player;
-    setBoard(nextBoard);
-    setAnimatingCell(null);
-    setIsAnimating(false);
-
-    const win = checkWin(nextBoard);
-    if (win) {
-      setWinner(win);
-    } else {
-      const nextP = player === 1 ? 2 : 1;
-      setCurrentPlayer(nextP);
-      if (mode === 'pvp' || (mode === 'ai' && nextP === 1)) newQuestion();
-    }
-  };
-
-  const checkWin = (b) => {
-    for (let r=0; r<ROWS; r++) for (let c=0; c<COLS-3; c++) if (b[r][c] && b[r][c]===b[r][c+1] && b[r][c]===b[r][c+2] && b[r][c]===b[r][c+3]) return b[r][c];
-    for (let r=0; r<ROWS-3; r++) for (let c=0; c<COLS; c++) if (b[r][c] && b[r][c]===b[r+1][c] && b[r][c]===b[r+2][c] && b[r][c]===b[r+3][c]) return b[r][c];
-    for (let r=3; r<ROWS; r++) for (let c=0; c<COLS-3; c++) if (b[r][c] && b[r][c]===b[r-1][c+1] && b[r][c]===b[r-2][c+2] && b[r][c]===b[r-3][c+3]) return b[r][c];
-    for (let r=0; r<ROWS-3; r++) for (let c=0; c<COLS-3; c++) if (b[r][c] && b[r][c]===b[r+1][c+1] && b[r][c]===b[r+2][c+2] && b[r][c]===b[r+3][c+3]) return b[r][c];
-    return null;
-  };
-
-  useEffect(() => {
-    if (mode === 'ai' && currentPlayer === 2 && !winner && !isAnimating) {
-      setTimeout(() => {
-        const avail = board[0].map((v, i) => v === null ? i : null).filter(v => v !== null);
-        if (avail.length > 0) drop(avail[Math.floor(Math.random() * avail.length)], 2);
-      }, 1000);
-    }
-  }, [currentPlayer, winner, isAnimating]);
-
-  const handleAnswer = (isCorrect) => {
-    if (isCorrect) {
-      setActiveQuestion(null);
-    } else {
-      const nextP = currentPlayer === 1 ? 2 : 1;
-      setCurrentPlayer(nextP);
-      newQuestion();
-    }
-  };
-
-  if (!mode) return (
-    <div className="flex flex-col gap-4 text-center font-comic">
-      <h2 className="text-2xl font-bold">בחר מצב משחק:</h2>
-      <button onClick={() => initGame('ai')} className="p-6 bg-sky-500 text-white rounded-3xl font-bold text-xl flex items-center justify-center gap-3"><Brain size={28}/> נגד מחשב</button>
-      <button onClick={() => initGame('pvp')} className="p-6 bg-rose-500 text-white rounded-3xl font-bold text-xl flex items-center justify-center gap-3"><Users size={28}/> שחקן נגד שחקן</button>
-      <button onClick={onBack} className="text-slate-400 mt-4 underline">חזרה</button>
-    </div>
-  );
-
-  return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-sm mx-auto font-comic">
-      <div className="flex justify-between w-full px-2">
-        <div className={`px-4 py-1 rounded-full font-bold transition-all ${currentPlayer === 1 ? 'bg-sky-500 text-white scale-105 shadow-md' : 'bg-slate-200 opacity-50'}`}>שחקן 1</div>
-        <div className={`px-4 py-1 rounded-full font-bold transition-all ${currentPlayer === 2 ? 'bg-rose-500 text-white scale-105 shadow-md' : 'bg-slate-200 opacity-50'}`}>{mode === 'ai' ? 'מחשב' : 'שחקן 2'}</div>
-      </div>
-
-      {activeQuestion && !isAnimating && (
-        <div className={`w-full p-4 rounded-3xl border-4 ${isDark ? 'bg-slate-900 border-sky-900' : 'bg-white border-sky-100 shadow-xl'} animate-in slide-in-from-top duration-300`}>
-          <div className="text-center text-3xl font-bold mb-4 text-sky-500" dir="ltr">{activeQuestion.eng}</div>
-          <div className="grid grid-cols-2 gap-2">
-            {options.map(o => (
-              <button key={o.id} onClick={() => handleAnswer(o.id === activeQuestion.id)} 
-                className={`p-3 rounded-xl border-2 font-bold text-sm ${isDark ? 'border-slate-700 hover:bg-slate-800 text-white' : 'border-sky-50 hover:bg-sky-50 text-slate-800'}`}>
-                {o.heb}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className={`p-3 rounded-[2.5rem] ${isDark ? 'bg-slate-900' : 'bg-sky-700'} w-full shadow-2xl relative`}>
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {Array(COLS).fill(0).map((_, c) => (
-            <button key={c} disabled={!!activeQuestion || isAnimating || board[0][c] || (mode === 'ai' && currentPlayer === 2)}
-              onClick={() => drop(c, currentPlayer)}
-              className={`h-10 flex items-center justify-center rounded-lg transition-colors ${(!activeQuestion && !isAnimating && !board[0][c]) ? 'bg-white/20 text-white animate-bounce' : 'opacity-0 pointer-events-none'}`}>
-              <ChevronDown size={28} />
-            </button>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-1">
-          {board.map((row, r) => row.map((cell, c) => {
-            const isAnimatingThis = animatingCell?.r === r && animatingCell?.c === c;
-            const displayP = isAnimatingThis ? animatingCell.player : cell;
-            return (
-              <div key={`${r}-${c}`} className={`aspect-square rounded-full border-2 border-black/20 shadow-inner flex items-center justify-center ${displayP === 1 ? 'bg-sky-400' : displayP === 2 ? 'bg-rose-500' : (isDark ? 'bg-slate-800' : 'bg-black/10')}`}>
-                {displayP && <div className="w-3/4 h-3/4 rounded-full border-2 border-white/20" />}
-              </div>
-            );
-          }))}
-        </div>
-      </div>
-
-      {winner && <GameOverMenu onRestart={() => initGame(mode)} onBackToGames={onBack} onResetApp={onResetApp} title={winner === 1 ? "ניצחת!" : (mode === 'ai' ? "המחשב ניצח" : "שחקן 2 ניצח!")} isDark={isDark} />}
-    </div>
-  );
-};
-
-// --- Dictation Game ---
-const DictationGame = ({ words, onBack, onResetApp, isDark }) => {
-  const [idx, setIdx] = useState(0);
-  const [input, setInput] = useState('');
-  const [status, setStatus] = useState('idle');
-  const [mistakes, setMistakes] = useState(0);
-
-  const check = () => {
-    if (input.toLowerCase().trim() === words[idx].eng.toLowerCase().trim()) {
-      setStatus('correct');
-      speak("Great job!");
-      setTimeout(() => {
-        if (idx + 1 < words.length) { setIdx(idx + 1); setInput(''); setStatus('idle'); }
-        else setStatus('finished');
-      }, 800);
-    } else {
-      setStatus('wrong');
-      setMistakes(m => m + 1);
-      setTimeout(() => setStatus('idle'), 1200);
-    }
-  };
-
-  if (status === 'finished') return <GameOverMenu onRestart={() => {setIdx(0); setInput(''); setStatus('idle'); setMistakes(0);}} onBackToGames={onBack} onResetApp={onResetApp} title="סיימת הכל!" subtitle={mistakes === 0 ? "מושלם! ללא טעויות!" : `עם ${mistakes} טעויות. נסה שוב!`} isDark={isDark} />;
-
-  return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-sm mx-auto font-comic">
-      <div className={`w-full p-8 rounded-3xl text-center shadow-2xl ${isDark ? 'bg-slate-900 border-2 border-slate-800' : 'bg-white'}`}>
-        <h3 className="text-4xl font-bold mb-6">{words[idx].heb}</h3>
-        <button onClick={() => speak(words[idx].eng)} className="p-5 bg-sky-100 text-sky-600 rounded-full mb-8 shadow-inner active:scale-90 transition-transform"><Volume2 size={40}/></button>
-        <input autoFocus value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && check()}
-          className={`w-full p-4 text-center text-3xl font-bold rounded-2xl border-4 transition-all outline-none ${
-            status === 'correct' ? 'border-emerald-500 bg-emerald-50 text-slate-900' : 
-            status === 'wrong' ? 'border-rose-500 bg-rose-50 text-slate-900' : 
-            (isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-sky-100 text-slate-900')
-          }`} dir="ltr" spellCheck="false" />
-      </div>
-      <button onClick={check} className="w-full py-5 bg-sky-500 text-white rounded-2xl font-bold text-2xl shadow-lg active:translate-y-1">בדוק תשובה</button>
-      <button onClick={onBack} className="text-slate-400 font-bold py-2 mt-4">חזרה לתפריט</button>
-    </div>
-  );
-};
-
-// --- Main App ---
-export default function App() {
-  const [view, setView] = useState('setup');
-  const [wordList, setWordList] = useState([]);
-  const [examList, setExamList] = useState([]);
-  const [examIdx, setExamIdx] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const [isDark, setIsDark] = useState(false);
-  const [rawText, setRawText] = useState('');
-
-  const resetAll = () => {
-    setView('setup');
-    // keep rawText so user can edit it
-  };
-
-  const start = () => {
-    const p = rawText.split('\n').map(l => {
-      const parts = l.split(/[,\t\-:|]+/).map(i => i.trim());
-      return parts.length >= 2 ? { eng: parts[0], heb: parts[1], id: Math.random().toString(36).substr(2,9) } : null;
-    }).filter(Boolean);
-    if (p.length >= 2) { 
-      setWordList(p); 
-      setExamList([...p]); 
-      setExamIdx(0);
-      setView('cards'); 
-    }
-  };
-
-  const handleKnowledge = (knows) => {
-    setFlipped(false);
-    setTimeout(() => {
-      const nl = [...examList];
-      const cur = nl.splice(examIdx, 1)[0];
-      if (!knows) nl.push(cur);
-      setExamList(nl);
-      if (nl.length === 0) setView('quiz');
-      else if (examIdx >= nl.length) setExamIdx(0);
-    }, 250);
-  };
-
-  return (
-    <div className={`min-h-[100dvh] transition-colors font-comic select-none pb-12 ${isDark ? 'bg-slate-950 text-white' : 'bg-sky-50 text-slate-900'}`} dir="rtl">
-      <style>{`
-        @import url('https://fonts.cdnfonts.com/css/comic-sans-ms');
-        .font-comic { font-family: 'Comic Sans MS', 'Comic Sans', cursive !important; }
+        /* Animations */
         .perspective-1000 { perspective: 1000px; }
-        .transform-style-3d { transform-style: preserve-3d; }
-        .backface-hidden { backface-visibility: hidden; }
-        .rotate-y-180 { transform: rotateY(180deg); }
-      `}</style>
-      
-      <header className="p-4 flex justify-between items-center max-w-md mx-auto sticky top-0 z-50 backdrop-blur-sm">
-        <button onClick={() => setIsDark(!isDark)} className={`p-3 rounded-2xl shadow-sm ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
-          {isDark ? <Sun className="text-yellow-400"/> : <Moon className="text-sky-500"/>}
-        </button>
-        <span className="text-2xl font-black text-sky-500 tracking-tight">English is Fun</span>
-        <div className="w-12" />
-      </header>
+        .card-inner {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .card-flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden; display: flex; align-items: center; justify-content: center;
+            border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .card-back { transform: rotateY(180deg); }
 
-      <main className="p-4 max-w-md mx-auto">
-        {view === 'setup' && (
-          <div className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'} p-6 rounded-3xl shadow-xl border-2`}>
-            <h2 className="text-2xl font-bold mb-4 text-center">מה לומדים היום?</h2>
-            <p className="text-sm text-slate-400 mb-4 text-center">הכנס מילה - תרגום (כל זוג בשורה חדשה)</p>
-            <textarea 
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-              className={`w-full h-48 p-4 rounded-2xl mb-4 border-2 outline-none font-bold text-lg ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-sky-50 border-sky-100 text-slate-900'}`} 
-              dir="ltr" 
-              placeholder="Apple - תפוח" 
-            />
-            <button onClick={start} className="w-full bg-sky-500 text-white py-5 rounded-2xl font-extrabold text-xl shadow-lg active:scale-95 transition-transform">מתחילים ללמוד!</button>
-          </div>
-        )}
+        .grid-cell {
+            aspect-ratio: 1/1; border-radius: 50%; background: #cbd5e0;
+            border: 4px solid #4a5568; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .night-mode .grid-cell { background: #4a5568; border-color: #718096; }
 
-        {view === 'cards' && examList.length > 0 && (
-          <div className="flex flex-col items-center gap-6 animate-in fade-in duration-500">
-            <div className="w-full flex justify-between font-bold px-2 text-sky-500 text-lg">
-              <span>נשארו: {examList.length}</span>
-              <span>{wordList.length - examList.length} נלמדו</span>
-            </div>
-            <div className="w-full h-72 cursor-pointer perspective-1000" onClick={() => setFlipped(!flipped)}>
-              <div className={`w-full h-full transition-all duration-500 transform-style-3d ${flipped ? 'rotate-y-180' : ''}`}>
-                <div className={`absolute inset-0 backface-hidden rounded-[2.5rem] border-4 flex flex-col items-center justify-center shadow-2xl ${isDark ? 'bg-slate-900 border-sky-700' : 'bg-white border-sky-400'}`}>
-                  <h3 className="text-5xl font-black text-sky-500 mb-6" dir="ltr">{examList[examIdx].eng}</h3>
-                  <button onClick={e => {e.stopPropagation(); speak(examList[examIdx].eng)}} className="p-4 bg-sky-100 text-sky-600 rounded-full shadow-inner"><Volume2 size={32}/></button>
-                  <p className="mt-6 text-slate-400 font-bold animate-pulse text-sm">לחץ כדי לראות תרגום</p>
+        .slot-animation { 
+            animation: fall 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
+        }
+        @keyframes fall { 
+            0% { transform: translateY(-300px); opacity: 0; } 
+            100% { transform: translateY(0); opacity: 1; } 
+        }
+
+        .night-toggle-btn {
+            position: fixed; top: 1rem; left: 1.25rem; z-index: 100;
+            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.75rem; background: none; border: none; cursor: pointer; outline: none;
+        }
+
+        .confetti {
+            position: fixed; width: 10px; height: 10px; z-index: 1000;
+            pointer-events: none; animation: confetti-fall 3s ease-out forwards;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 200;
+        }
+
+        /* Clean speaker button - no background */
+        .btn-speak-clean {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s;
+            line-height: 1;
+        }
+        .btn-speak-clean:hover { transform: scale(1.2); }
+        .btn-speak-clean:active { transform: scale(0.9); }
+    </style>
+</head>
+<body class="bg-blue-50 text-gray-800 min-h-screen">
+
+    <button id="toggleNight" class="night-toggle-btn">☀️</button>
+    <div id="app" class="container mx-auto px-4 py-8 max-w-2xl mt-8"></div>
+
+    <script>
+        // State Management
+        let state = {
+            screen: 'input', inputText: '', words: [], nightMode: false,
+            testResults: null,
+            memoryGame: { mode: 'single', cards: [], flipped: [], pairs: 0, moves: 0, p: 1, s: [0, 0] },
+            connect4: { board: Array(6).fill(null).map(() => Array(7).fill(null)), turn: 1, mode: 'ai', q: null, isAnimating: false, canDrop: false, lastMove: null },
+            winner: null
+        };
+
+        // Text-to-Speech
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'en-US'; u.rate = 0.8;
+            window.speechSynthesis.speak(u);
+        }
+
+        // Helpers
+        function shuffle(a) { return [...a].sort(() => Math.random() - 0.5); }
+
+        function fireConfetti() {
+            const colors = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+            for (let i = 0; i < 100; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.top = '-10px';
+                c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                c.style.width = (Math.random() * 8 + 5) + 'px';
+                c.style.height = c.style.width;
+                c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 3000);
+            }
+        }
+
+        // Router/Renderer
+        function render() {
+            document.body.classList.toggle('night-mode', state.nightMode);
+            document.getElementById('toggleNight').innerHTML = state.nightMode ? '🌙' : '☀️';
+            const app = document.getElementById('app');
+            
+            if (state.winner) { renderWinScreen(app); return; }
+
+            switch(state.screen) {
+                case 'input': renderInput(app); break;
+                case 'flashcards': renderFlashcards(app); break;
+                case 'test': renderTest(app); break;
+                case 'menu': renderMenu(app); break;
+                case 'memory_mode': renderMemoryMode(app); break;
+                case 'memory': renderMemory(app); break;
+                case 'connect4_mode': renderC4Mode(app); break;
+                case 'connect4': renderConnect4(app); break;
+            }
+        }
+
+        // 1. Input Screen
+        function renderInput(app) {
+            app.innerHTML = `
+                <div class="text-center space-y-6">
+                    <h1 class="text-4xl font-bold text-blue-600 eng-text">Word Adventure</h1>
+                    <p class="text-lg">הכניסו מילים (אנגלית - עברית):</p>
+                    <textarea id="wordInput" class="w-full h-48 p-4 rounded-2xl border-2 border-blue-200 outline-none text-right text-black" placeholder="apple - תפוח">${state.inputText}</textarea>
+                    <button onclick="processInput()" class="bg-blue-600 text-white px-8 py-4 rounded-full text-xl font-bold w-full shadow-lg transform hover:scale-105 transition">בואו נצא לדרך! 🚀</button>
                 </div>
-                <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-[2.5rem] bg-sky-500 flex flex-col items-center justify-center shadow-2xl text-white">
-                   <h3 className="text-5xl font-black mb-2">{examList[examIdx].heb}</h3>
-                   <p className="opacity-70">לחץ כדי לחזור למילה</p>
+            `;
+            document.getElementById('wordInput').oninput = (e) => state.inputText = e.target.value;
+        }
+
+        function processInput() {
+            const lines = state.inputText.split('\n').filter(l => l.includes('-'));
+            state.words = lines.map(l => {
+                const [eng, heb] = l.split('-').map(s => s.trim());
+                return { eng, heb, known: false };
+            });
+            if (state.words.length < 2) return alert('נא להזין לפחות 2 מילים');
+            state.screen = 'flashcards'; render();
+        }
+
+        // 2. Learning Screen (Flashcards)
+        function renderFlashcards(app) {
+            const unknown = state.words.filter(w => !w.known);
+            if (unknown.length === 0) { state.screen = 'test'; render(); return; }
+            const cur = unknown[0];
+            app.innerHTML = `
+                <div class="text-center space-y-6">
+                    <h2 class="text-xl font-bold">מכירים את המילים (${state.words.filter(w => w.known).length}/${state.words.length})</h2>
+                    <div onclick="this.classList.toggle('card-flipped')" class="relative w-64 h-80 mx-auto perspective-1000 cursor-pointer">
+                        <div class="card-inner">
+                            <div class="card-front bg-white border-4 border-blue-200 text-blue-600 flex-col gap-4">
+                                <span class="text-4xl eng-text font-bold text-black">${cur.eng}</span>
+                                <button onclick="event.stopPropagation(); speak('${cur.eng}')" class="btn-speak-clean text-4xl">🔊</button>
+                            </div>
+                            <div class="card-back bg-blue-500 text-white border-4 border-blue-600">
+                                <span class="text-4xl font-bold">${cur.heb}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 max-w-sm mx-auto">
+                        <button onclick="state.words.push(state.words.shift()); render()" class="bg-orange-400 text-white p-4 rounded-xl font-bold flex-1 shadow-md">עוד קצת תרגול</button>
+                        <button onclick="state.words.find(w=>w.eng==='${cur.eng}').known=true; render()" class="bg-green-500 text-white p-4 rounded-xl font-bold flex-1 shadow-md">קלי קלות!</button>
+                    </div>
                 </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 w-full">
-              <button onClick={() => handleKnowledge(true)} className="flex flex-col items-center p-5 bg-emerald-500 text-white rounded-[2rem] font-bold text-xl shadow-lg active:scale-95 transition-all">
-                <ThumbsUp size={32} className="mb-2"/> יודע
-              </button>
-              <button onClick={() => handleKnowledge(false)} className="flex flex-col items-center p-5 bg-rose-500 text-white rounded-[2rem] font-bold text-xl shadow-lg active:scale-95 transition-all">
-                <ThumbsDown size={32} className="mb-2"/> לא יודע
-              </button>
-            </div>
-            <button onClick={resetAll} className="text-slate-400 underline text-sm">עריכת רשימת המילים</button>
-          </div>
-        )}
+            `;
+        }
 
-        {view === 'quiz' && (
-          <Quiz 
-            words={wordList} 
-            onPass={() => setView('games')} 
-            onFail={() => {
-              setExamList([...wordList]);
-              setExamIdx(0);
-              setView('cards');
-            }} 
-            isDark={isDark} 
-          />
-        )}
+        // 3. Challenge Screen (The "Test")
+        function renderTest(app) {
+            if (!state.testResults) {
+                state.testResults = { questions: shuffle(state.words).map(w => {
+                    const isE = Math.random() > 0.5;
+                    const correct = isE ? w.heb : w.eng;
+                    const opts = shuffle([correct, ...shuffle(state.words.filter(x=>x!==w).map(x=>isE?x.heb:x.eng)).slice(0,3)]);
+                    return { word: isE ? w.eng : w.heb, isE, correct, opts, ans: null };
+                }), idx: 0 };
+            }
+            const q = state.testResults.questions[state.testResults.idx];
+            if (!q) {
+                const score = Math.round((state.testResults.questions.filter(q=>q.ans===q.correct).length/state.words.length)*100);
+                app.innerHTML = `
+                    <div class="text-center space-y-6 bg-white p-8 rounded-2xl shadow-xl">
+                        <h2 class="text-2xl font-bold text-black">${score >= 70 ? 'כל הכבוד! אתם אלופים! ✨' : 'יופי של ניסיון! בואו נחזור על זה שוב?'}</h2>
+                        <p class="text-xl text-gray-600">הצלחתם ב-${score}% מהמילים</p>
+                        ${score >= 70 ? `<button onclick="state.screen='menu'; state.testResults=null; render()" class="bg-green-600 text-white p-4 rounded-full font-bold w-full shadow-lg">יאללה למשחקים! 🎮</button>` : 
+                        `<button onclick="state.words.forEach(w=>w.known=false); state.testResults=null; state.screen='flashcards'; render()" class="bg-blue-600 text-white p-4 rounded-full font-bold w-full shadow-lg">חזרה לתרגול מהנה</button>`}
+                    </div>
+                `;
+                return;
+            }
+            app.innerHTML = `
+                <div class="text-center space-y-4">
+                    <h2 class="font-bold text-blue-600">אתגר המילים (${state.testResults.idx+1}/${state.words.length})</h2>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border-2 border-blue-50">
+                        <div class="flex items-center justify-center gap-4 mb-6">
+                            <div class="text-3xl font-bold text-black ${q.isE ? 'eng-text' : ''}">${q.word}</div>
+                            ${q.isE ? `<button onclick="speak('${q.word}')" class="btn-speak-clean text-3xl">🔊</button>` : ''}
+                        </div>
+                        <div class="grid gap-3">
+                            ${q.opts.map(o => `
+                                <div class="flex items-center gap-2">
+                                    <button onclick="state.testResults.questions[state.testResults.idx].ans='${o}'; state.testResults.idx++; render()" class="flex-1 p-4 border-2 rounded-xl font-bold text-black hover:bg-blue-50 transition ${!q.isE ? 'eng-text text-xl' : 'text-lg'}">${o}</button>
+                                    ${!q.isE ? `<button onclick="speak('${o}')" class="btn-speak-clean text-3xl px-2">🔊</button>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-        {view === 'games' && (
-          <div className="grid gap-4 animate-in slide-in-from-bottom duration-500">
-            <div className="text-center mb-4">
-              <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-2" />
-              <h2 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-sky-600'}`}>כל הכבוד!</h2>
-              <p className="opacity-60 font-bold">איזה משחק נבחר?</p>
-            </div>
-            <button onClick={() => setView('connect4')} className={`p-5 rounded-[2rem] border-2 flex items-center gap-5 font-bold text-2xl transition-all active:scale-95 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-sky-100 shadow-md'}`}>
-              <div className="p-3 bg-sky-100 rounded-2xl text-sky-500"><LayoutGrid size={32}/></div>
-              4 בשורה
-            </button>
-            <button onClick={() => setView('dictation')} className={`p-5 rounded-[2rem] border-2 flex items-center gap-5 font-bold text-2xl transition-all active:scale-95 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-sky-100 shadow-md'}`}>
-              <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-500"><Keyboard size={32}/></div>
-              הכתבה
-            </button>
-            <button onClick={() => setView('memory')} className={`p-5 rounded-[2rem] border-2 flex items-center gap-5 font-bold text-2xl transition-all active:scale-95 ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-sky-100 shadow-md'}`}>
-              <div className="p-3 bg-purple-100 rounded-2xl text-purple-500"><Layers size={32}/></div>
-              זיכרון
-            </button>
-            <button onClick={resetAll} className="mt-6 text-slate-400 font-bold text-center underline flex items-center justify-center gap-2"><Edit3 size={18}/> ערוך מילים / התחל מהתחלה</button>
-          </div>
-        )}
+        // 4. Games Menu
+        function renderMenu(app) {
+            app.innerHTML = `
+                <div class="text-center space-y-8">
+                    <h2 class="text-3xl font-bold text-blue-600 eng-text uppercase tracking-widest pt-4">Games</h2>
+                    <div class="grid gap-4 max-w-sm mx-auto">
+                        <button onclick="state.screen='memory_mode'; render()" class="p-8 bg-purple-500 text-white rounded-2xl text-2xl font-bold shadow-lg transform hover:scale-105 transition">זיכרון 🧠</button>
+                        <button onclick="state.screen='connect4_mode'; render()" class="p-8 bg-blue-500 text-white rounded-2xl text-2xl font-bold shadow-lg transform hover:scale-105 transition">4 בשורה 🔴</button>
+                    </div>
+                    <button onclick="state.screen='input'; state.testResults=null; render()" class="mt-8 p-4 px-8 bg-gray-200 text-gray-800 rounded-full font-bold">🔄 הזנת מילים חדשות</button>
+                </div>
+            `;
+        }
 
-        {view === 'connect4' && <ConnectFour words={wordList} onBack={() => setView('games')} onResetApp={resetAll} isDark={isDark} />}
-        {view === 'dictation' && <DictationGame words={wordList} onBack={() => setView('games')} onResetApp={resetAll} isDark={isDark} />}
-        {view === 'memory' && <MemoryGame words={wordList} onBack={() => setView('games')} onResetApp={resetAll} isDark={isDark} />}
-      </main>
-    </div>
-  );
-}
+        // Memory Game Logic
+        function renderMemoryMode(app) {
+            app.innerHTML = `
+                <div class="text-center space-y-6 pt-4">
+                    <h2 class="text-2xl font-bold text-purple-600">משחק זיכרון</h2>
+                    <div class="space-y-3 max-w-sm mx-auto">
+                        <button onclick="startMemory('single')" class="p-6 bg-white border-2 border-purple-100 rounded-xl text-xl font-bold w-full text-black">שחקן יחיד</button>
+                        <button onclick="startMemory('multi')" class="p-6 bg-white border-2 border-purple-100 rounded-xl text-xl font-bold w-full text-black">שני שחקנים</button>
+                        <button onclick="state.screen='menu'; render()" class="text-gray-500 underline block w-full">חזרה לתפריט</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startMemory(m) {
+            state.screen = 'memory';
+            const cards = [];
+            state.words.slice(0, 8).forEach(w => {
+                cards.push({ t: w.eng, m: w.heb, type: 'eng' }, { t: w.heb, m: w.eng, type: 'heb' });
+            });
+            state.memoryGame = { mode: m, cards: shuffle(cards).map((c, i) => ({ ...c, id: i, f: false, ok: false })), flipped: [], pairs: 0, moves: 0, p: 1, s: [0, 0] };
+            state.winner = null; render();
+        }
+
+        function renderMemory(app) {
+            const g = state.memoryGame;
+            app.innerHTML = `
+                <div class="text-center space-y-4">
+                    <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border mb-2">
+                        <button onclick="state.screen='menu'; render()" class="bg-red-500 text-white px-3 py-1 rounded-lg text-sm">יציאה</button>
+                        <div class="font-bold text-sm text-black">
+                            ${g.mode==='single' ? `מהלכים: ${g.moves}` : `תור שחקן ${g.p} | ${g.s[0]}-${g.s[1]}`}
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2">
+                        ${g.cards.map(c => `
+                            <div onclick="flipM(${c.id})" class="relative aspect-[3/4] perspective-1000 cursor-pointer ${c.f || c.ok ? 'card-flipped' : ''}">
+                                <div class="card-inner">
+                                    <div class="card-front bg-purple-500 border-2 border-white"></div>
+                                    <div class="card-back bg-white border-2 border-purple-100 p-1 ${c.ok?'border-green-500':''}">
+                                        <div class="flex flex-col items-center justify-center h-full gap-1">
+                                            <span class="font-bold text-black text-center ${c.type==='eng'?'eng-text':''} text-xs sm:text-base">${c.t}</span>
+                                            ${c.type==='eng' ? `<button onclick="event.stopPropagation(); speak('${c.t}')" class="btn-speak-clean text-lg">🔊</button>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            if (g.pairs === g.cards.length / 2) {
+                if (g.mode === 'single') state.winner = { msg: "ניצחת!", score: `סיימת ב-${g.moves} מהלכים!` };
+                else state.winner = { msg: g.s[0]>g.s[1] ? "שחקן 1 ניצח!" : g.s[1]>g.s[0] ? "שחקן 2 ניצח!" : "תיקו!", score: `תוצאה: ${g.s[0]} מול ${g.s[1]}` };
+                fireConfetti(); setTimeout(render, 500);
+            }
+        }
+
+        function flipM(id) {
+            const g = state.memoryGame;
+            const c = g.cards.find(x=>x.id===id);
+            if (c.f || c.ok || g.flipped.length === 2) return;
+            c.f = true; g.flipped.push(c); render();
+            if (g.flipped.length === 2) {
+                g.moves++;
+                const [c1, c2] = g.flipped;
+                if (c1.t === c2.m) {
+                    c1.ok = c2.ok = true; g.pairs++;
+                    if (g.mode==='multi') g.s[g.p-1]++;
+                    g.flipped = []; render();
+                } else {
+                    setTimeout(() => { c1.f = c2.f = false; g.flipped = []; if (g.mode==='multi') g.p = g.p===1?2:1; render(); }, 1000);
+                }
+            }
+        }
+
+        // Connect 4 Logic
+        function renderC4Mode(app) {
+            app.innerHTML = `
+                <div class="text-center space-y-6 pt-4">
+                    <h2 class="text-2xl font-bold text-blue-600">4 בשורה</h2>
+                    <div class="space-y-3 max-w-sm mx-auto">
+                        <button onclick="startC4('ai')" class="p-6 bg-white border-2 border-blue-100 rounded-xl text-xl font-bold w-full text-black">נגד המחשב</button>
+                        <button onclick="startC4('multi')" class="p-6 bg-white border-2 border-blue-100 rounded-xl text-xl font-bold w-full text-black">שני שחקנים</button>
+                        <button onclick="state.screen='menu'; render()" class="text-gray-500 underline block w-full">חזרה לתפריט</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startC4(m) {
+            state.screen = 'connect4';
+            state.connect4 = { board: Array(6).fill(null).map(() => Array(7).fill(null)), turn: 1, mode: m, isAnimating: false, canDrop: false, q: genQ(), lastMove: null };
+            state.winner = null; render();
+        }
+
+        function genQ() {
+            const w = state.words[Math.floor(Math.random()*state.words.length)];
+            const isE = Math.random()>0.5;
+            const correct = isE ? w.heb : w.eng;
+            return { w: isE?w.eng:w.heb, isE, correct, opts: shuffle([correct, ...shuffle(state.words.filter(x=>x!==w).map(x=>isE?x.heb:x.eng)).slice(0,3)]) };
+        }
+
+        function renderConnect4(app) {
+            const c = state.connect4;
+            const isAI = c.mode==='ai' && c.turn===2;
+            app.innerHTML = `
+                <div class="text-center space-y-4">
+                    <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border mb-2">
+                        <button onclick="state.screen='menu'; render()" class="bg-red-500 text-white px-3 py-1 rounded-lg text-sm">יציאה</button>
+                        <div class="font-bold text-sm text-black">תור: ${c.turn===1 ? '<span class="text-red-500">אדום</span>' : '<span class="text-yellow-500">צהוב</span>'}</div>
+                    </div>
+                    ${!c.canDrop && !c.isAnimating && !isAI ? `
+                        <div class="modal-overlay p-4">
+                            <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full">
+                                <h3 class="font-bold mb-4 text-black">נצחו את אתגר המילה:</h3>
+                                <div class="bg-blue-50 p-4 rounded-xl mb-4 flex items-center justify-center gap-2">
+                                    <span class="text-2xl font-bold text-black ${c.q.isE ? 'eng-text' : ''}">${c.q.w}</span>
+                                    ${c.q.isE ? `<button onclick="speak('${c.q.w}')" class="btn-speak-clean text-2xl">🔊</button>` : ''}
+                                </div>
+                                <div class="grid gap-2">
+                                    ${c.q.opts.map(o => `
+                                        <div class="flex items-center gap-2">
+                                            <button onclick="ansC4('${o}')" class="flex-1 p-3 border rounded-xl font-bold text-black hover:bg-blue-50 text-sm ${!c.q.isE ? 'eng-text' : ''}">${o}</button>
+                                            ${!c.q.isE ? `<button onclick="speak('${o}')" class="btn-speak-clean text-2xl px-1">🔊</button>` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `:''}
+                    <div class="flex justify-around mb-2">
+                        ${[0,1,2,3,4,5,6].map(i => `<button onclick="dropC4(${i})" class="text-3xl ${!c.canDrop || c.isAnimating || c.board[0][i] ? 'opacity-20 pointer-events-none' : ''}">👇</button>`).join('')}
+                    </div>
+                    <div class="bg-blue-700 p-2 rounded-xl inline-block border-4 border-blue-800">
+                        <div class="grid grid-cols-7 gap-1">
+                            ${c.board.map((row, rIdx) => row.map((cell, cIdx) => `
+                                <div class="grid-cell w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center">
+                                    ${cell ? `<div class="w-5/6 h-5/6 rounded-full shadow-md ${cell===1?'bg-red-500':'bg-yellow-400'} ${state.connect4.lastMove && state.connect4.lastMove.r === rIdx && state.connect4.lastMove.c === cIdx ? 'slot-animation' : ''}"></div>` : ''}
+                                </div>
+                            `).join('')).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (isAI && !c.isAnimating) {
+                setTimeout(() => { 
+                    const valid = [0,1,2,3,4,5,6].filter(i=>!c.board[0][i]);
+                    if (valid.length) { c.canDrop = true; dropC4(valid[Math.floor(Math.random()*valid.length)]); }
+                }, 1000);
+            }
+        }
+
+        function ansC4(o) {
+            if (o === state.connect4.q.correct) { state.connect4.canDrop = true; render(); }
+            else { alert('אופס, נסו שוב בתור הבא!'); nextC4(); }
+        }
+
+        function dropC4(col) {
+            const c = state.connect4;
+            let row = -1;
+            for (let r=5; r>=0; r--) { if (!c.board[r][col]) { row = r; break; } }
+            if (row === -1) return;
+            c.isAnimating = true; 
+            c.lastMove = { r: row, c: col };
+            c.board[row][col] = c.turn; 
+            render();
+            setTimeout(() => {
+                if (checkWin(c.board)) {
+                    state.winner = { msg: c.mode==='ai' && c.turn===1 ? "ניצחת את המחשב!" : c.mode==='ai' && c.turn===2 ? "המחשב ניצח הפעם..." : `שחקן ${c.turn} ניצח!`, score: "" };
+                    fireConfetti(); render();
+                } else nextC4();
+            }, 500);
+        }
+
+        function nextC4() {
+            state.connect4.turn = state.connect4.turn===1?2:1;
+            state.connect4.canDrop = false; state.connect4.isAnimating = false;
+            state.connect4.q = genQ(); 
+            state.connect4.lastMove = null;
+            render();
+        }
+
+        function checkWin(b) {
+            for (let r=0; r<6; r++) for (let c=0; c<4; c++) if (b[r][c] && b[r][c]==b[r][c+1] && b[r][c]==b[r][c+2] && b[r][c]==b[r][c+3]) return true;
+            for (let r=0; r<3; r++) for (let c=0; c<7; c++) if (b[r][c] && b[r][c]==b[r+1][c] && b[r][c]==b[r+2][c] && b[r][c]==b[r+3][c]) return true;
+            for (let r=0; r<3; r++) for (let c=0; c<4; c++) {
+                if (b[r][c] && b[r][c]==b[r+1][c+1] && b[r][c]==b[r+2][c+2] && b[r][c]==b[r+3][c+3]) return true;
+                if (b[r][c+3] && b[r][c+3]==b[r+1][c+2] && b[r][c+3]==b[r+2][c+1] && b[r][c+3]==b[r+3][c]) return true;
+            }
+            return false;
+        }
+
+        // Win Screen
+        function renderWinScreen(app) {
+            app.innerHTML = `
+                <div class="text-center space-y-8 bg-white p-12 rounded-3xl shadow-2xl border-4 border-yellow-400">
+                    <div class="text-6xl mb-4 animate-bounce">🏆</div>
+                    <h2 class="text-4xl font-bold text-black">${state.winner.msg}</h2>
+                    <p class="text-2xl text-gray-600">${state.winner.score}</p>
+                    <div class="flex flex-col gap-3">
+                        <button onclick="retryGame()" class="bg-green-600 text-white p-5 rounded-2xl text-xl font-bold shadow-lg transform hover:scale-105 transition">שחקו שוב 🎮</button>
+                        <button onclick="state.winner=null; state.screen='menu'; render()" class="bg-gray-200 text-gray-800 p-4 rounded-2xl font-bold">חזרה למשחקים</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function retryGame() {
+            const m = state.screen;
+            state.winner = null;
+            if (m === 'memory') startMemory(state.memoryGame.mode);
+            else if (m === 'connect4') startC4(state.connect4.mode);
+        }
+
+        // Night Mode Toggle Listener
+        document.getElementById('toggleNight').onclick = () => { state.nightMode = !state.nightMode; render(); };
+        
+        // Initial Render
+        render();
+    </script>
+</body>
+</html>
 
