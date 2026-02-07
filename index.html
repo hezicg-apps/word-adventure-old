@@ -38,6 +38,24 @@
         .night-mode .text-blue-600 { color: #60a5fa !important; }
         .night-mode .text-blue-900, .night-mode .text-green-900, .night-mode .text-purple-900 { color: #ffffff !important; }
 
+        /* Neon Glow Effects for Night Mode Win Screen */
+        @keyframes neon-pulse-red {
+            0%, 100% { box-shadow: 0 0 15px #ef4444, 0 0 30px #ef4444; }
+            50% { box-shadow: 0 0 25px #ef4444, 0 0 50px #ef4444; }
+        }
+        @keyframes neon-pulse-yellow {
+            0%, 100% { box-shadow: 0 0 15px #facc15, 0 0 30px #facc15; }
+            50% { box-shadow: 0 0 25px #facc15, 0 0 50px #facc15; }
+        }
+        @keyframes neon-pulse-purple {
+            0%, 100% { box-shadow: 0 0 15px #a855f7, 0 0 30px #a855f7; }
+            50% { box-shadow: 0 0 25px #a855f7, 0 0 50px #a855f7; }
+        }
+
+        .night-mode .glow-red { animation: neon-pulse-red 1.5s infinite; border-color: #ef4444 !important; }
+        .night-mode .glow-yellow { animation: neon-pulse-yellow 1.5s infinite; border-color: #facc15 !important; }
+        .night-mode .glow-purple { animation: neon-pulse-purple 1.5s infinite; border-color: #a855f7 !important; }
+
         #app { padding-top: 10px; }
 
         /* Card Flip Effect */
@@ -99,10 +117,10 @@
             box-shadow: inset 0 -4px 4px rgba(0,0,0,0.2);
         }
         
-        .token-new { animation: popIn 0.3s ease-out forwards; }
+        .token-new { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
         @keyframes popIn {
-            0% { transform: scale(0.2); opacity: 0; }
+            0% { transform: scale(0.3); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
 
@@ -408,6 +426,7 @@
                                 if (!cell && c.animatingCol === col && c.animatingRow === r) {
                                     highlightClass = c.turn === 1 ? "highlight-red" : "highlight-yellow";
                                 }
+                                // Animation logic: ONLY if it's the latest drop AND within a short time window
                                 const isNew = (c.lastDropped.r === r && c.lastDropped.c === col);
                                 return `<div class="c4-slot ${highlightClass}">
                                     ${cell ? `<div class="token-fixed ${cell===1?'bg-red-500':'bg-yellow-400'} ${isNew ? 'token-new' : ''}"></div>` : ''}
@@ -447,6 +466,7 @@
             for (let r=5; r>=0; r--) { if (!c.board[r][col]) { targetRow = r; break; } }
             if (targetRow === -1) return;
             c.canDrop = false; 
+            // Reset lastDropped during animation to prevent old tokens from re-animating
             c.lastDropped = { r: -1, c: -1 }; 
             let currentRow = 0;
             const interval = setInterval(() => {
@@ -457,14 +477,30 @@
                         c.board[targetRow][col] = c.turn;
                         c.lastDropped = { r: targetRow, c: col }; 
                         c.animatingRow = -1; c.animatingCol = -1;
+                        render(); // Show the token with popIn animation
+
+                        // After a delay, clear the lastDropped to prevent re-animation on next turn
+                        setTimeout(() => {
+                            if (state.screen === 'connect4') {
+                                c.lastDropped = { r: -1, c: -1 };
+                                // Don't call render() here as it might disrupt the board state visibility
+                            }
+                        }, 500);
+
                         if (checkWin(c.board)) { 
                             triggerConfetti(); 
-                            setTimeout(() => { state.winner = { type: 'c4', msg: c.turn===1?"אדום ניצח!":"צהוב ניצח!", color: c.turn===1?'red':'yellow' }; render(); }, 400);
-                        } else { c.turn = c.turn===1?2:1; c.showQuestionPrompt = true; c.q = genC4Q(); render(); }
+                            setTimeout(() => { state.winner = { type: 'c4', msg: c.turn===1?"אדום ניצח!":"צהוב ניצח!", color: c.turn===1?'red':'yellow' }; render(); }, 600);
+                        } else { 
+                            c.turn = c.turn===1?2:1; 
+                            c.showQuestionPrompt = true; 
+                            c.q = genC4Q(); 
+                            // Delay showing the prompt slightly for a better feel
+                            setTimeout(render, 300);
+                        }
                     }, 50);
                 }
                 currentRow++;
-            }, 100);
+            }, 800 / 6); // Speed up the fall slightly
         }
 
         function checkWin(b) {
@@ -480,8 +516,16 @@
         function renderWinScreen(app) {
             const c = state.winner.color;
             let borderColor = c === 'red' ? 'border-red-500' : (c === 'purple' ? 'border-purple-500' : 'border-yellow-400');
+            
+            let neonClass = "";
+            if (state.nightMode) {
+                if (c === 'red') neonClass = "glow-red";
+                else if (c === 'yellow') neonClass = "glow-yellow";
+                else if (c === 'purple') neonClass = "glow-purple";
+            }
+
             app.innerHTML = `
-                <div class="text-center p-10 bg-white rounded-[3rem] border-8 ${borderColor} shadow-2xl mx-4 mt-8 max-w-sm w-full animate-fade-in transition-colors welcome-card">
+                <div class="text-center p-10 bg-white rounded-[3rem] border-8 ${borderColor} ${neonClass} shadow-2xl mx-4 mt-8 max-w-sm w-full animate-fade-in transition-all welcome-card">
                     <h2 class="text-4xl font-extrabold mb-6 text-black">${state.winner.msg} 🎉</h2>
                     <button onclick="state.winner=null; state.screen='menu'; render()" class="bg-blue-600 text-white py-6 rounded-2xl text-2xl font-bold w-full shadow-lg active:scale-95">חזרה לתפריט 🏠</button>
                 </div>`;
@@ -491,16 +535,6 @@
             state.inputText = ''; state.words = []; state.masteryScore = 0;
             state.quizIndex = 0; state.correctAnswers = 0; state.winner = null;
             state.screen = 'input'; render();
-        }
-
-        function processInput() {
-            const lines = state.inputText.split('\n').filter(l => l.includes('-'));
-            state.words = lines.map(l => {
-                const parts = l.split('-');
-                return { eng: parts[0].trim(), heb: parts.slice(1).join('-').trim(), known: false, id: crypto.randomUUID() };
-            });
-            if (state.words.length < 2) return;
-            state.screen = 'flashcards'; render();
         }
 
         document.getElementById('toggleNight').onclick = () => { state.nightMode = !state.nightMode; render(); };
