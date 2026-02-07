@@ -14,6 +14,7 @@
             transition: background-color 0.3s; 
             overflow-x: hidden; 
             touch-action: manipulation; 
+            font-size: 1.1rem; /* Overall font size increase for elementary students */
         }
         
         .eng-text { font-family: 'Comic Neue', 'Arial', sans-serif; }
@@ -24,7 +25,12 @@
         .night-mode .text-black { color: #ffffff !important; }
         .night-mode .text-gray-600 { color: #cbd5e0 !important; }
         .night-mode .text-gray-700 { color: #f6e05e !important; } 
-        /* Night mode yellow text */
+        
+        /* Fixed contrast for instructions in Night Mode */
+        .night-mode .bg-blue-100 { background-color: #2c5282 !important; border-color: #4a5568 !important; }
+        .night-mode .text-blue-800 { color: #f6e05e !important; }
+
+        /* Night mode yellow text for main UI titles */
         .night-mode .text-blue-600, 
         .night-mode .text-blue-800,
         .night-mode h1.text-blue-600,
@@ -34,7 +40,6 @@
         .night-mode button:not(.bg-blue-600):not(.bg-green-500):not(.bg-orange-500):not(.quiz-btn):not(.memory-action-btn) { color: #ffffff; }
         .night-mode textarea { background-color: #1a202c !important; color: #ffffff !important; border-color: #4a5568 !important; }
 
-        /* Adjusted for top placement */
         #app { padding-top: 10px; }
 
         /* Card Flip Effect */
@@ -47,7 +52,7 @@
         .card-flipped .card-inner { transform: rotateY(180deg); }
         .card-front, .card-back { 
             position: absolute; width: 100%; height: 100%; 
-            backface-visibility: hidden; border-radius: 0.75rem; 
+            backface-visibility: hidden; border-radius: 1.5rem; 
             display: flex; align-items: center; justify-content: center; 
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 8px;
             overflow: hidden;
@@ -80,19 +85,18 @@
         .correct-ans { background-color: #10b981 !important; color: white !important; }
         .wrong-ans { background-color: #ef4444 !important; color: white !important; }
 
-        .speaker-btn { background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 50%; }
-        .speaker-btn:hover { background-color: rgba(0,0,0,0.05); }
+        .speaker-btn { background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 50%; transition: transform 0.2s; }
+        .speaker-btn:hover { transform: scale(1.1); background-color: rgba(0,0,0,0.05); }
 
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-blue-50 text-gray-800 min-h-screen p-0 m-0">
-    <!-- Header with Toggle integrated to save space -->
-    <header class="flex justify-between items-center px-4 py-2 w-full max-w-2xl mx-auto">
-        <button id="toggleNight" class="text-2xl p-0 bg-transparent border-none outline-none cursor-pointer">☀️</button>
-        <h1 class="text-2xl font-bold text-blue-600 eng-text">Word Adventure</h1>
-        <div class="w-8"></div> <!-- Spacer for balance -->
+    <header class="flex justify-between items-center px-4 py-2 w-full max-w-2xl mx-auto border-b border-blue-100 bg-white/50 sticky top-0 z-50">
+        <button id="toggleNight" class="text-3xl p-0 bg-transparent border-none outline-none cursor-pointer">☀️</button>
+        <h1 class="text-3xl font-bold text-blue-600 eng-text">Word Adventure</h1>
+        <div class="w-8"></div>
     </header>
 
     <div id="app" class="container mx-auto px-4 pb-6 max-w-2xl flex flex-col items-center w-full"></div>
@@ -147,34 +151,34 @@
 
         function renderWelcome(app) {
             app.innerHTML = `
-                <div class="text-center space-y-4 w-full max-w-md animate-fade-in px-2">
-                    <div class="bg-white p-5 rounded-[1.5rem] border-4 border-blue-200 shadow-lg text-center space-y-3 overflow-hidden">
-                        <p class="text-2xl font-bold text-blue-800 border-b-2 border-blue-100 pb-1">ברוכים הבאים!</p>
-                        <p class="text-lg font-medium">הצטרפו להרפתקת למידה של מילים חדשות באנגלית.</p>
+                <div class="text-center space-y-4 w-full max-w-md animate-fade-in px-2 mt-4">
+                    <div class="bg-white p-6 rounded-[2rem] border-4 border-blue-200 shadow-xl text-center space-y-4 overflow-hidden">
+                        <p class="text-3xl font-bold text-blue-800 border-b-2 border-blue-100 pb-2">ברוכים הבאים!</p>
+                        <p class="text-xl font-medium">הצטרפו להרפתקת למידה של מילים חדשות באנגלית.</p>
                         
-                        <div class="space-y-3 text-base py-1">
+                        <div class="space-y-4 text-lg py-1">
                             <p>1. מדביקים רשימת מילים מהמורה.</p>
                             <p>2. מתרגלים עם כרטיסיות (אל תדלגו!).</p>
                             <p>3. עוברים את האתגר ופותחים משחקים.</p>
                         </div>
-                        <div class="bg-purple-50 p-3 rounded-xl border-2 border-purple-100">
-                             <p class="text-base font-bold text-purple-700">מחכים לכם משחקי זיכרון ו-4 בשורה!</p>
+                        <div class="bg-purple-50 p-4 rounded-2xl border-2 border-purple-100">
+                             <p class="text-lg font-bold text-purple-700">מחכים לכם משחקי זיכרון ו-4 בשורה!</p>
                         </div>
                     </div>
-                    <button onclick="state.screen='input'; render()" class="bg-blue-600 text-white px-8 py-4 rounded-full text-xl font-bold w-full shadow-md transition-all active:scale-95">שנתחיל? 🚀</button>
+                    <button onclick="state.screen='input'; render()" class="bg-blue-600 text-white px-8 py-5 rounded-full text-2xl font-bold w-full shadow-lg transition-all active:scale-95">שנתחיל? 🚀</button>
                 </div>`;
         }
 
         function renderInput(app) {
             app.innerHTML = `
-                <div class="text-center space-y-4 w-full px-2">
-                    <p class="text-lg font-bold">הכניסו מילים (אנגלית - עברית):</p>
-                    <textarea id="wordInput" class="w-full h-48 p-4 rounded-2xl border-2 border-blue-200 outline-none text-right text-black bg-white shadow-inner" placeholder="apple - תפוח">${state.inputText}</textarea>
-                    <div class="bg-blue-100 p-2 rounded-lg text-blue-800 text-xs font-medium">
+                <div class="text-center space-y-4 w-full px-2 mt-2">
+                    <p class="text-xl font-bold">הכניסו מילים (אנגלית - עברית):</p>
+                    <textarea id="wordInput" class="w-full h-48 p-4 rounded-3xl border-2 border-blue-200 outline-none text-right text-black bg-white shadow-inner text-xl" placeholder="apple - תפוח">${state.inputText}</textarea>
+                    <div class="bg-blue-100 p-3 rounded-2xl text-blue-800 text-base font-bold border-2 border-blue-200">
                         הקפידו על מקף (-) בין האנגלית לתרגום.
                     </div>
-                    <button onclick="processInput()" class="bg-blue-600 text-white px-8 py-4 rounded-full text-xl font-bold w-full shadow-md active:scale-95">התחל ללמוד! 🚀</button>
-                    <button onclick="state.screen='welcome'; render()" class="text-gray-400 text-xs underline block mx-auto">חזרה להוראות</button>
+                    <button onclick="processInput()" class="bg-blue-600 text-white px-8 py-5 rounded-full text-2xl font-bold w-full shadow-lg active:scale-95">התחל ללמוד! 🚀</button>
+                    <button onclick="state.screen='welcome'; render()" class="text-gray-400 text-sm underline block mx-auto">חזרה להוראות</button>
                 </div>`;
             document.getElementById('wordInput').oninput = (e) => state.inputText = e.target.value;
         }
@@ -194,23 +198,23 @@
             if (unknown.length === 0) { state.quizIndex = 0; state.correctAnswers = 0; state.screen = 'quiz'; render(); return; }
             const cur = unknown[0];
             app.innerHTML = `
-                <div class="text-center space-y-4 w-full max-w-sm px-2">
-                    <h2 class="text-xl font-bold">לימוד מילים (${state.words.filter(w=>w.known).length}/${state.words.length})</h2>
-                    <div id="flashcard" onclick="this.classList.toggle('card-flipped')" class="relative w-full h-64 perspective-1000 cursor-pointer mx-auto">
+                <div class="text-center space-y-4 w-full max-w-sm px-2 mt-2">
+                    <h2 class="text-2xl font-bold">לימוד מילים (${state.words.filter(w=>w.known).length}/${state.words.length})</h2>
+                    <div id="flashcard" onclick="this.classList.toggle('card-flipped')" class="relative w-full h-72 perspective-1000 cursor-pointer mx-auto">
                         <div class="card-inner">
-                            <div class="card-front bg-white border-4 border-blue-200 flex-col shadow-md">
-                                <span class="text-4xl font-bold text-blue-600 eng-text mb-4">${cur.eng}</span>
-                                <button onclick="event.stopPropagation(); speak('${cur.eng}')" class="speaker-btn text-4xl">🔊</button>
+                            <div class="card-front bg-white border-4 border-blue-200 flex-col shadow-xl">
+                                <span class="text-5xl font-bold text-blue-600 eng-text mb-4">${cur.eng}</span>
+                                <button onclick="event.stopPropagation(); speak('${cur.eng}')" class="speaker-btn text-5xl">🔊</button>
                             </div>
-                            <div class="card-back bg-blue-500 border-4 border-blue-600 text-white shadow-md">
-                                <span class="text-3xl font-bold text-center px-4">${cur.heb}</span>
+                            <div class="card-back bg-blue-500 border-4 border-blue-600 text-white shadow-xl">
+                                <span class="text-4xl font-bold text-center px-4">${cur.heb}</span>
                             </div>
                         </div>
                     </div>
-                    <p class="text-blue-500 font-bold text-sm animate-bounce">לחצו על הכרטיסייה לתרגום 🔄</p>
-                    <div class="grid grid-cols-2 gap-3 w-full">
-                         <button onclick="state.words.find(w=>w.id === '${cur.id}').known=true; render()" class="bg-green-500 text-white py-4 rounded-xl font-bold shadow-md active:scale-95">יודע! ✅</button>
-                         <button onclick="state.words = shuffle(state.words); render()" class="bg-orange-500 text-white py-4 rounded-xl font-bold shadow-md active:scale-95">עוד לא... ⏳</button>
+                    <p class="text-blue-500 font-bold text-lg animate-bounce">לחצו על הכרטיסייה לתרגום 🔄</p>
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                         <button onclick="state.words.find(w=>w.id === '${cur.id}').known=true; render()" class="bg-green-500 text-white py-5 rounded-2xl font-bold shadow-lg text-2xl active:scale-95">יודע! ✅</button>
+                         <button onclick="state.words = shuffle(state.words); render()" class="bg-orange-500 text-white py-5 rounded-2xl font-bold shadow-lg text-2xl active:scale-95">עוד לא... ⏳</button>
                     </div>
                 </div>`;
         }
@@ -227,20 +231,20 @@
             }
 
             app.innerHTML = `
-                <div class="text-center space-y-4 w-full max-w-sm px-2">
-                    <h2 class="text-lg font-bold text-blue-600">אתגר המילים (${state.quizIndex + 1}/${state.words.length})</h2>
-                    <div class="bg-white p-6 rounded-[2rem] border-4 border-blue-400 shadow-lg">
+                <div class="text-center space-y-4 w-full max-w-sm px-2 mt-2">
+                    <h2 class="text-xl font-bold text-blue-600">אתגר המילים (${state.quizIndex + 1}/${state.words.length})</h2>
+                    <div class="bg-white p-6 rounded-[2.5rem] border-4 border-blue-400 shadow-xl">
                         <div class="flex items-center justify-center gap-4 mb-6">
-                             <div class="text-3xl font-bold eng-text text-black">${cur.eng}</div>
-                             <button onclick="speak('${cur.eng}')" class="speaker-btn text-2xl">🔊</button>
+                             <div class="text-4xl font-bold eng-text text-black">${cur.eng}</div>
+                             <button onclick="speak('${cur.eng}')" class="speaker-btn text-3xl">🔊</button>
                         </div>
-                        <div class="grid gap-3">
+                        <div class="grid gap-4">
                             ${state.quizOptions.map((o, idx) => {
                                 let statusClass = "";
                                 if (state.quizFeedback.index === idx) {
                                     statusClass = state.quizFeedback.status === 'correct' ? 'correct-ans' : 'wrong-ans';
                                 }
-                                return `<button onclick="handleQuizAns('${o}', '${cur.heb}', ${idx})" class="quiz-btn py-3 px-2 border-2 rounded-xl font-bold text-lg text-black transition-all shadow-sm ${statusClass}">${o}</button>`;
+                                return `<button onclick="handleQuizAns('${o}', '${cur.heb}', ${idx})" class="quiz-btn py-4 px-2 border-2 rounded-2xl font-bold text-2xl text-black transition-all shadow-md ${statusClass}">${o}</button>`;
                             }).join('')}
                         </div>
                     </div>
@@ -263,19 +267,19 @@
         function renderMenu(app) {
             const isLocked = state.masteryScore < 70;
             app.innerHTML = `
-                <div class="text-center space-y-4 w-full max-w-md px-2">
-                    <div class="bg-white p-6 rounded-[1.5rem] shadow-md border-4 border-blue-100">
-                        <h2 class="text-2xl font-bold text-blue-600 mb-2">הציון שלך: ${state.masteryScore.toFixed(0)}%</h2>
-                        <div class="py-1 px-3 rounded-full inline-block ${isLocked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} font-bold text-sm">
+                <div class="text-center space-y-5 w-full max-w-md px-2 mt-2">
+                    <div class="bg-white p-8 rounded-[2rem] shadow-xl border-4 border-blue-100">
+                        <h2 class="text-3xl font-bold text-blue-600 mb-2">הציון שלך: ${state.masteryScore.toFixed(0)}%</h2>
+                        <div class="py-2 px-4 rounded-full inline-block ${isLocked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} font-bold text-lg">
                             ${isLocked?'דרוש 70% לפתיחת המשחקים':'כל הכבוד! המשחקים פתוחים'}
                         </div>
                     </div>
-                    <button onclick="${isLocked?'':'startMemory()'}" class="p-5 bg-purple-500 text-white rounded-2xl text-xl font-bold w-full shadow-md active:scale-95 ${isLocked?'opacity-50 grayscale':''}">משחק זיכרון 🧠</button>
-                    <button onclick="${isLocked?'':'startC4()'}" class="p-5 bg-blue-500 text-white rounded-2xl text-xl font-bold w-full shadow-md active:scale-95 ${isLocked?'opacity-50 grayscale':''}">4 בשורה 🔴🟡</button>
+                    <button onclick="${isLocked?'':'startMemory()'}" class="p-6 bg-purple-500 text-white rounded-[2rem] text-2xl font-bold w-full shadow-lg active:scale-95 transition-transform hover:scale-102 ${isLocked?'opacity-50 grayscale':''}">משחק זיכרון 🧠</button>
+                    <button onclick="${isLocked?'':'startC4()'}" class="p-6 bg-blue-500 text-white rounded-[2rem] text-2xl font-bold w-full shadow-lg active:scale-95 transition-transform hover:scale-102 ${isLocked?'opacity-50 grayscale':''}">4 בשורה 🔴🟡</button>
                     
-                    <div class="flex flex-col gap-3 mt-4 border-t-2 border-blue-50 pt-4">
-                        <button onclick="state.words.forEach(w=>w.known=false); state.screen='flashcards'; render()" class="text-blue-600 font-bold text-sm underline">חזרה לתרגול</button>
-                        <button onclick="resetAllData()" class="text-red-500 font-bold text-sm underline">הזנת רשימה חדשה</button>
+                    <div class="flex flex-col gap-4 mt-6 border-t-2 border-blue-100 pt-6">
+                        <button onclick="state.words.forEach(w=>w.known=false); state.screen='flashcards'; render()" class="text-blue-600 font-bold text-lg underline">חזרה לתרגול</button>
+                        <button onclick="resetAllData()" class="text-red-500 font-bold text-lg underline">הזנת רשימה חדשה</button>
                     </div>
                 </div>`;
         }
@@ -293,18 +297,18 @@
         function renderMemory(app) {
             const g = state.memoryGame;
             app.innerHTML = `
-                <div class="flex flex-col items-center w-full px-2">
-                    <div class="flex justify-between items-center w-full max-w-sm mb-3 bg-white p-3 rounded-xl border shadow-sm">
-                        <button onclick="state.screen='menu'; render()" class="text-red-500 font-bold text-sm">יציאה</button>
-                        <span class="text-sm font-bold text-black">צעדים: ${g.steps} | זוגות: ${g.pairs}</span>
+                <div class="flex flex-col items-center w-full px-2 mt-2">
+                    <div class="flex justify-between items-center w-full max-w-sm mb-4 bg-white p-4 rounded-2xl border shadow-md">
+                        <button onclick="state.screen='menu'; render()" class="text-red-500 font-bold text-lg px-2">יציאה</button>
+                        <span class="text-lg font-bold text-black">צעדים: ${g.steps} | זוגות: ${g.pairs}</span>
                     </div>
                     <div class="grid grid-cols-4 gap-2 w-full max-w-sm">
                         ${g.cards.map(c => `
                             <div onclick="flipM(${c.id})" class="relative aspect-square perspective-1000 cursor-pointer ${c.f || c.ok ? 'card-flipped' : ''}">
                                 <div class="card-inner">
-                                    <div class="card-front bg-purple-600 text-white text-2xl font-bold">?</div>
+                                    <div class="card-front bg-purple-600 text-white text-3xl font-bold">?</div>
                                     <div class="card-back bg-white border-2 ${c.ok?'border-green-400 bg-green-50':'border-purple-200'}">
-                                        <div class="memory-text text-black font-bold text-xs ${c.isEng ? 'eng-text' : ''}">${c.t}</div>
+                                        <div class="memory-text text-black font-bold text-sm ${c.isEng ? 'eng-text' : ''}">${c.t}</div>
                                     </div>
                                 </div>
                             </div>`).join('')}
@@ -342,19 +346,19 @@
         function renderConnect4(app) {
             const c = state.connect4;
             app.innerHTML = `
-                <div class="flex flex-col items-center w-full px-1">
-                    <div class="w-full flex justify-between items-center mb-2 bg-white p-2 rounded-xl border shadow-sm max-w-sm">
-                        <button onclick="state.screen='menu'; render()" class="text-red-500 font-bold text-sm">יציאה</button>
-                        <div class="font-bold text-black text-sm">תור: ${c.turn===1?'אדום 🔴':'צהוב 🟡'}</div>
+                <div class="flex flex-col items-center w-full px-1 mt-2">
+                    <div class="w-full flex justify-between items-center mb-3 bg-white p-3 rounded-xl border shadow-md max-w-sm">
+                        <button onclick="state.screen='menu'; render()" class="text-red-500 font-bold text-lg">יציאה</button>
+                        <div class="font-bold text-black text-lg">תור: ${c.turn===1?'אדום 🔴':'צהוב 🟡'}</div>
                     </div>
                     
-                    <div class="h-10 mb-2 flex items-center">
-                        ${c.showQuestionPrompt ? `<button onclick="state.connect4.showQuestionPrompt=false; render(); speak('${c.q.eng}')" class="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md">שאלה לאסימון</button>` : `<div class="text-blue-600 font-bold text-sm animate-pulse">בחר עמודה 👇</div>`}
+                    <div class="h-12 mb-2 flex items-center">
+                        ${c.showQuestionPrompt ? `<button onclick="state.connect4.showQuestionPrompt=false; render(); speak('${c.q.eng}')" class="bg-blue-600 text-white px-8 py-3 rounded-full text-lg font-bold shadow-lg">שאלה לאסימון</button>` : `<div class="text-blue-600 font-bold text-xl animate-pulse">בחר עמודה 👇</div>`}
                     </div>
 
                     <div class="c4-container">
                         <div class="arrows-row">
-                            ${[0,1,2,3,4,5,6].map(i => `<button onclick="dropC4(${i})" class="w-full text-center text-xl ${!c.canDrop || c.board[0][i] ? 'opacity-10 pointer-events-none' : 'text-blue-500'}">👇</button>`).join('')}
+                            ${[0,1,2,3,4,5,6].map(i => `<button onclick="dropC4(${i})" class="w-full text-center text-2xl ${!c.canDrop || c.board[0][i] ? 'opacity-10 pointer-events-none' : 'text-blue-500'}">👇</button>`).join('')}
                         </div>
                         <div class="c4-board">
                             ${c.board.map((row, r) => row.map((cell, col) => `<div class="c4-slot">${cell ? `<div class="token-fixed ${cell===1?'bg-red-500':'bg-yellow-400'}"></div>` : ''}</div>`).join('')).join('')}
@@ -362,11 +366,11 @@
                     </div>
 
                     ${!c.canDrop && !c.showQuestionPrompt ? `
-                        <div class="modal-overlay fixed inset-0 bg-black/60 flex items-center justify-center z-[200]">
-                            <div class="bg-white p-6 rounded-[1.5rem] max-w-xs w-full text-center mx-4 border-2 border-blue-500 shadow-2xl">
-                                <h3 class="text-3xl font-bold mb-6 text-blue-600 eng-text">${c.q.prompt}</h3>
-                                <div class="grid gap-2">
-                                    ${c.q.opts.map(o => `<button onclick="ansC4('${o}')" class="p-3 border-2 rounded-xl font-bold text-black text-lg">${o}</button>`).join('')}
+                        <div class="modal-overlay fixed inset-0 bg-black/70 flex items-center justify-center z-[200]">
+                            <div class="bg-white p-8 rounded-[2.5rem] max-w-sm w-full text-center mx-4 border-4 border-blue-500 shadow-2xl">
+                                <h3 class="text-4xl font-bold mb-8 text-blue-600 eng-text">${c.q.prompt}</h3>
+                                <div class="grid gap-4">
+                                    ${c.q.opts.map(o => `<button onclick="ansC4('${o}')" class="p-5 border-2 rounded-2xl font-bold text-black text-2xl shadow-sm hover:bg-blue-50">${o}</button>`).join('')}
                                 </div>
                             </div>
                         </div>` : ''}
@@ -400,9 +404,9 @@
 
         function renderWinScreen(app) {
             app.innerHTML = `
-                <div class="text-center p-8 bg-white rounded-[2rem] border-4 border-yellow-400 shadow-xl mx-4 mt-6 max-w-xs w-full animate-fade-in">
-                    <h2 class="text-3xl font-extrabold mb-4 text-black">${state.winner.msg} 🎉</h2>
-                    <button onclick="state.winner=null; state.screen='menu'; render()" class="bg-blue-600 text-white py-4 rounded-xl text-xl font-bold w-full shadow-md active:scale-95">חזרה לתפריט 🏠</button>
+                <div class="text-center p-10 bg-white rounded-[3rem] border-8 border-yellow-400 shadow-2xl mx-4 mt-8 max-w-sm w-full animate-fade-in">
+                    <h2 class="text-4xl font-extrabold mb-8 text-black">${state.winner.msg} 🎉</h2>
+                    <button onclick="state.winner=null; state.screen='menu'; render()" class="bg-blue-600 text-white py-6 rounded-2xl text-2xl font-bold w-full shadow-lg active:scale-95">חזרה לתפריט 🏠</button>
                 </div>`;
         }
 
