@@ -24,7 +24,7 @@
         .night-mode .text-black { color: #ffffff !important; }
         .night-mode .text-gray-600 { color: #cbd5e0 !important; }
         .night-mode .text-gray-700 { color: #f6e05e !important; } 
-        /* Night mode specific yellow text for readability */
+        /* Night mode yellow text */
         .night-mode .text-blue-600, 
         .night-mode .text-blue-800,
         .night-mode h1.text-blue-600,
@@ -34,7 +34,8 @@
         .night-mode button:not(.bg-blue-600):not(.bg-green-500):not(.bg-orange-500):not(.quiz-btn):not(.memory-action-btn) { color: #ffffff; }
         .night-mode textarea { background-color: #1a202c !important; color: #ffffff !important; border-color: #4a5568 !important; }
 
-        #app { padding-top: 60px; }
+        /* Adjusted for top placement */
+        #app { padding-top: 10px; }
 
         /* Card Flip Effect */
         .perspective-1000 { perspective: 1000px; }
@@ -53,113 +54,48 @@
         }
         .card-back { transform: rotateY(180deg); }
 
-        /* Memory Game Text Adaptation */
+        /* Memory Game */
         .memory-text {
-            text-align: center;
-            width: 100%;
-            word-wrap: break-word;
-            hyphens: auto;
-            line-height: 1.2;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            text-align: center; width: 100%; word-wrap: break-word;
+            line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical; overflow: hidden;
         }
 
         /* Connect 4 */
-        .c4-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: fit-content;
-            margin: 0 auto;
-        }
-
         .c4-board {
-            display: grid;
-            grid-template-columns: repeat(7, 42px);
-            grid-template-rows: repeat(6, 42px);
-            gap: 6px;
-            background-color: #1e40af;
-            padding: 10px;
-            border-radius: 12px;
+            display: grid; grid-template-columns: repeat(7, 40px);
+            grid-template-rows: repeat(6, 40px); gap: 4px;
+            background-color: #1e40af; padding: 8px; border-radius: 12px;
         }
-
-        .arrows-row { 
-            display: grid; 
-            grid-template-columns: repeat(7, 42px); 
-            gap: 6px; 
-            margin-bottom: 8px;
-            width: 100%;
-            padding: 0 10px;
-        }
-
+        .arrows-row { display: grid; grid-template-columns: repeat(7, 40px); gap: 4px; margin-bottom: 4px; }
         @media (min-width: 640px) {
-            .c4-board {
-                grid-template-columns: repeat(7, 58px);
-                grid-template-rows: repeat(6, 58px);
-                gap: 8px;
-            }
-            .arrows-row {
-                grid-template-columns: repeat(7, 58px);
-                gap: 8px;
-            }
+            .c4-board { grid-template-columns: repeat(7, 58px); grid-template-rows: repeat(6, 58px); gap: 8px; }
+            .arrows-row { grid-template-columns: repeat(7, 58px); gap: 8px; }
         }
 
-        .c4-slot {
-            width: 100%;
-            height: 100%;
-            background-color: #f1f5f9;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
+        .c4-slot { width: 100%; height: 100%; background-color: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .night-mode .c4-slot { background-color: #4a5568; }
+        .token-fixed { width: 90%; height: 90%; border-radius: 50%; }
 
-        .token-fixed {
-            width: 90%;
-            height: 90%;
-            border-radius: 50%;
-            box-shadow: inset 0 -3px 4px rgba(0,0,0,0.2);
-        }
+        .correct-ans { background-color: #10b981 !important; color: white !important; }
+        .wrong-ans { background-color: #ef4444 !important; color: white !important; }
 
-        /* Quiz Feedback Colors */
-        .correct-ans { background-color: #10b981 !important; color: white !important; border-color: #059669 !important; }
-        .wrong-ans { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; }
+        .speaker-btn { background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 50%; }
+        .speaker-btn:hover { background-color: rgba(0,0,0,0.05); }
 
-        /* Speaker Button Clean Look */
-        .speaker-btn {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: transform 0.2s, background-color 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .speaker-btn:hover {
-            transform: scale(1.1);
-            background-color: rgba(0,0,0,0.05);
-        }
-        .night-mode .speaker-btn:hover {
-            background-color: rgba(255,255,255,0.1);
-        }
-
-        /* Animations */
-        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-blue-50 text-gray-800 min-h-screen">
-    <button id="toggleNight" class="fixed top-4 left-4 z-[110] text-3xl p-0 bg-transparent border-none outline-none cursor-pointer">☀️</button>
-    <div id="app" class="container mx-auto px-4 pb-10 max-w-2xl flex flex-col items-center w-full"></div>
+<body class="bg-blue-50 text-gray-800 min-h-screen p-0 m-0">
+    <!-- Header with Toggle integrated to save space -->
+    <header class="flex justify-between items-center px-4 py-2 w-full max-w-2xl mx-auto">
+        <button id="toggleNight" class="text-2xl p-0 bg-transparent border-none outline-none cursor-pointer">☀️</button>
+        <h1 class="text-2xl font-bold text-blue-600 eng-text">Word Adventure</h1>
+        <div class="w-8"></div> <!-- Spacer for balance -->
+    </header>
+
+    <div id="app" class="container mx-auto px-4 pb-6 max-w-2xl flex flex-col items-center w-full"></div>
 
     <script>
         let state = {
@@ -172,11 +108,7 @@
         };
 
         function triggerConfetti() {
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
 
         function speak(text) {
@@ -189,14 +121,9 @@
         function shuffle(a) { return [...a].sort(() => Math.random() - 0.5); }
 
         function resetAllData() {
-            state.inputText = '';
-            state.words = [];
-            state.masteryScore = 0;
-            state.quizIndex = 0;
-            state.correctAnswers = 0;
-            state.winner = null;
-            state.screen = 'input';
-            render();
+            state.inputText = ''; state.words = []; state.masteryScore = 0;
+            state.quizIndex = 0; state.correctAnswers = 0; state.winner = null;
+            state.screen = 'input'; render();
         }
 
         function render() {
@@ -220,37 +147,34 @@
 
         function renderWelcome(app) {
             app.innerHTML = `
-                <div class="text-center space-y-6 w-full max-w-md mt-2 animate-fade-in px-2">
-                    <h1 class="text-5xl font-extrabold text-blue-600 eng-text mb-4 tracking-tight">Word Adventure</h1>
-                    <div class="bg-white p-6 md:p-8 rounded-[2rem] border-4 border-blue-200 shadow-2xl text-center space-y-5 leading-snug overflow-hidden">
-                        <p class="text-3xl font-bold text-blue-800 border-b-2 border-blue-100 pb-2">ברוכים הבאים!</p>
-                        <p class="text-xl font-medium">הצטרפו להרפתקת למידה בה נלמד יחד מילים חדשות באנגלית.</p>
+                <div class="text-center space-y-4 w-full max-w-md animate-fade-in px-2">
+                    <div class="bg-white p-5 rounded-[1.5rem] border-4 border-blue-200 shadow-lg text-center space-y-3 overflow-hidden">
+                        <p class="text-2xl font-bold text-blue-800 border-b-2 border-blue-100 pb-1">ברוכים הבאים!</p>
+                        <p class="text-lg font-medium">הצטרפו להרפתקת למידה של מילים חדשות באנגלית.</p>
                         
-                        <div class="space-y-6 text-lg py-2">
-                            <p>מדביקים רשימת מילים מהמורה או מקלידים מילים חדשות.</p>
-                            <p>מתרגלים עם כרטיסיות. <span class="text-orange-600 font-bold">לא לדלג!</span> הכרת המילים היא המפתח להצלחה.</p>
-                            <p>עוברים את אתגר המילים כדי לפתוח את המשחקים.</p>
+                        <div class="space-y-3 text-base py-1">
+                            <p>1. מדביקים רשימת מילים מהמורה.</p>
+                            <p>2. מתרגלים עם כרטיסיות (אל תדלגו!).</p>
+                            <p>3. עוברים את האתגר ופותחים משחקים.</p>
                         </div>
-                        
-                        <div class="bg-purple-50 p-4 rounded-2xl border-2 border-purple-100">
-                             <p class="text-lg font-bold text-purple-700">מחכים לכם משחקי זיכרון ו-4 בשורה!</p>
+                        <div class="bg-purple-50 p-3 rounded-xl border-2 border-purple-100">
+                             <p class="text-base font-bold text-purple-700">מחכים לכם משחקי זיכרון ו-4 בשורה!</p>
                         </div>
                     </div>
-                    <button onclick="state.screen='input'; render()" class="bg-blue-600 text-white px-10 py-6 rounded-full text-2xl font-bold w-full shadow-lg transition-all hover:scale-105 active:scale-95 hover:bg-blue-700">הבנתי - שנתחיל? 🚀</button>
+                    <button onclick="state.screen='input'; render()" class="bg-blue-600 text-white px-8 py-4 rounded-full text-xl font-bold w-full shadow-md transition-all active:scale-95">שנתחיל? 🚀</button>
                 </div>`;
         }
 
         function renderInput(app) {
             app.innerHTML = `
-                <div class="text-center space-y-6 w-full mt-4 px-2">
-                    <h1 class="text-4xl font-bold text-blue-600 eng-text">Word Adventure</h1>
-                    <p class="text-xl font-bold">הכניסו מילים (אנגלית - עברית):</p>
-                    <textarea id="wordInput" class="w-full h-56 p-5 rounded-3xl border-2 border-blue-200 outline-none text-right text-black bg-white shadow-inner text-lg" placeholder="apple - תפוח">${state.inputText}</textarea>
-                    <div class="bg-blue-100 p-3 rounded-xl text-blue-800 text-sm font-medium">
-                        שימו לב: הקפידו על מקף (-) בין המילה באנגלית לתרגום.
+                <div class="text-center space-y-4 w-full px-2">
+                    <p class="text-lg font-bold">הכניסו מילים (אנגלית - עברית):</p>
+                    <textarea id="wordInput" class="w-full h-48 p-4 rounded-2xl border-2 border-blue-200 outline-none text-right text-black bg-white shadow-inner" placeholder="apple - תפוח">${state.inputText}</textarea>
+                    <div class="bg-blue-100 p-2 rounded-lg text-blue-800 text-xs font-medium">
+                        הקפידו על מקף (-) בין האנגלית לתרגום.
                     </div>
-                    <button onclick="processInput()" class="bg-blue-600 text-white px-8 py-5 rounded-full text-2xl font-bold w-full shadow-lg transition-transform hover:scale-105 active:scale-95">התחל ללמוד! 🚀</button>
-                    <button onclick="state.screen='welcome'; render()" class="text-gray-400 text-sm underline block mx-auto">חזרה להוראות</button>
+                    <button onclick="processInput()" class="bg-blue-600 text-white px-8 py-4 rounded-full text-xl font-bold w-full shadow-md active:scale-95">התחל ללמוד! 🚀</button>
+                    <button onclick="state.screen='welcome'; render()" class="text-gray-400 text-xs underline block mx-auto">חזרה להוראות</button>
                 </div>`;
             document.getElementById('wordInput').oninput = (e) => state.inputText = e.target.value;
         }
@@ -259,9 +183,7 @@
             const lines = state.inputText.split('\n').filter(l => l.includes('-'));
             state.words = lines.map(l => {
                 const parts = l.split('-');
-                const eng = parts[0].trim();
-                const heb = parts.slice(1).join('-').trim();
-                return { eng, heb, known: false, id: crypto.randomUUID() };
+                return { eng: parts[0].trim(), heb: parts.slice(1).join('-').trim(), known: false, id: crypto.randomUUID() };
             });
             if (state.words.length < 2) return;
             state.screen = 'flashcards'; render();
@@ -272,23 +194,23 @@
             if (unknown.length === 0) { state.quizIndex = 0; state.correctAnswers = 0; state.screen = 'quiz'; render(); return; }
             const cur = unknown[0];
             app.innerHTML = `
-                <div class="text-center space-y-6 w-full max-w-sm px-2">
-                    <h2 class="text-2xl font-bold">לימוד מילים (${state.words.filter(w=>w.known).length}/${state.words.length})</h2>
-                    <div id="flashcard" onclick="this.classList.toggle('card-flipped')" class="relative w-full h-80 perspective-1000 cursor-pointer mx-auto">
+                <div class="text-center space-y-4 w-full max-w-sm px-2">
+                    <h2 class="text-xl font-bold">לימוד מילים (${state.words.filter(w=>w.known).length}/${state.words.length})</h2>
+                    <div id="flashcard" onclick="this.classList.toggle('card-flipped')" class="relative w-full h-64 perspective-1000 cursor-pointer mx-auto">
                         <div class="card-inner">
-                            <div class="card-front bg-white border-4 border-blue-200 flex-col shadow-xl">
-                                <span class="text-5xl font-bold text-blue-600 eng-text mb-6">${cur.eng}</span>
-                                <button onclick="event.stopPropagation(); speak('${cur.eng}')" class="speaker-btn text-5xl">🔊</button>
+                            <div class="card-front bg-white border-4 border-blue-200 flex-col shadow-md">
+                                <span class="text-4xl font-bold text-blue-600 eng-text mb-4">${cur.eng}</span>
+                                <button onclick="event.stopPropagation(); speak('${cur.eng}')" class="speaker-btn text-4xl">🔊</button>
                             </div>
-                            <div class="card-back bg-blue-500 border-4 border-blue-600 text-white shadow-xl">
-                                <span class="text-4xl font-bold text-center px-4">${cur.heb}</span>
+                            <div class="card-back bg-blue-500 border-4 border-blue-600 text-white shadow-md">
+                                <span class="text-3xl font-bold text-center px-4">${cur.heb}</span>
                             </div>
                         </div>
                     </div>
-                    <p class="text-blue-500 font-bold text-lg animate-bounce">לחצו על הכרטיסייה לתרגום 🔄</p>
-                    <div class="grid grid-cols-2 gap-4 w-full">
-                         <button onclick="state.words.find(w=>w.id === '${cur.id}').known=true; render()" class="bg-green-500 text-white py-5 rounded-2xl text-xl font-bold shadow-lg active:scale-95">יודע! ✅</button>
-                         <button onclick="state.words = shuffle(state.words); render()" class="bg-orange-500 text-white py-5 rounded-2xl text-xl font-bold shadow-lg active:scale-95">עוד לא... ⏳</button>
+                    <p class="text-blue-500 font-bold text-sm animate-bounce">לחצו על הכרטיסייה לתרגום 🔄</p>
+                    <div class="grid grid-cols-2 gap-3 w-full">
+                         <button onclick="state.words.find(w=>w.id === '${cur.id}').known=true; render()" class="bg-green-500 text-white py-4 rounded-xl font-bold shadow-md active:scale-95">יודע! ✅</button>
+                         <button onclick="state.words = shuffle(state.words); render()" class="bg-orange-500 text-white py-4 rounded-xl font-bold shadow-md active:scale-95">עוד לא... ⏳</button>
                     </div>
                 </div>`;
         }
@@ -305,20 +227,20 @@
             }
 
             app.innerHTML = `
-                <div class="text-center space-y-6 w-full max-w-sm px-2">
-                    <h2 class="text-2xl font-bold text-blue-600">אתגר המילים (${state.quizIndex + 1}/${state.words.length})</h2>
-                    <div class="bg-white p-8 rounded-[2.5rem] border-4 border-blue-400 shadow-2xl">
-                        <div class="flex items-center justify-center gap-6 mb-8">
-                             <div class="text-4xl font-bold eng-text text-black">${cur.eng}</div>
-                             <button onclick="speak('${cur.eng}')" class="speaker-btn text-3xl">🔊</button>
+                <div class="text-center space-y-4 w-full max-w-sm px-2">
+                    <h2 class="text-lg font-bold text-blue-600">אתגר המילים (${state.quizIndex + 1}/${state.words.length})</h2>
+                    <div class="bg-white p-6 rounded-[2rem] border-4 border-blue-400 shadow-lg">
+                        <div class="flex items-center justify-center gap-4 mb-6">
+                             <div class="text-3xl font-bold eng-text text-black">${cur.eng}</div>
+                             <button onclick="speak('${cur.eng}')" class="speaker-btn text-2xl">🔊</button>
                         </div>
-                        <div class="grid gap-4">
+                        <div class="grid gap-3">
                             ${state.quizOptions.map((o, idx) => {
                                 let statusClass = "";
                                 if (state.quizFeedback.index === idx) {
                                     statusClass = state.quizFeedback.status === 'correct' ? 'correct-ans' : 'wrong-ans';
                                 }
-                                return `<button onclick="handleQuizAns('${o}', '${cur.heb}', ${idx})" class="quiz-btn py-4 px-2 border-2 rounded-2xl font-bold text-xl text-black transition-all shadow-sm ${statusClass}">${o}</button>`;
+                                return `<button onclick="handleQuizAns('${o}', '${cur.heb}', ${idx})" class="quiz-btn py-3 px-2 border-2 rounded-xl font-bold text-lg text-black transition-all shadow-sm ${statusClass}">${o}</button>`;
                             }).join('')}
                         </div>
                     </div>
@@ -332,8 +254,7 @@
             if (isCorrect) state.correctAnswers++;
             render();
             setTimeout(() => {
-                state.quizIndex++;
-                state.quizOptions = null;
+                state.quizIndex++; state.quizOptions = null;
                 state.quizFeedback = { index: -1, status: null };
                 render();
             }, 600);
@@ -342,119 +263,72 @@
         function renderMenu(app) {
             const isLocked = state.masteryScore < 70;
             app.innerHTML = `
-                <div class="text-center space-y-6 w-full max-w-md px-2">
-                    <div class="bg-white p-8 rounded-[2rem] shadow-xl border-4 border-blue-100 mb-4">
-                        <h2 class="text-3xl font-bold text-blue-600 mb-3">הציון שלך: ${state.masteryScore.toFixed(0)}%</h2>
-                        <p class="text-xl text-gray-600 mb-4 font-medium">ענית נכון על ${state.correctAnswers} מתוך ${state.words.length} מילים.</p>
-                        <div class="py-2 px-4 rounded-full inline-block ${isLocked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} font-bold text-lg">
-                            ${isLocked?'עליך לקבל 70% כדי לפתוח את המשחקים':'כל הכבוד! המשחקים פתוחים'}
+                <div class="text-center space-y-4 w-full max-w-md px-2">
+                    <div class="bg-white p-6 rounded-[1.5rem] shadow-md border-4 border-blue-100">
+                        <h2 class="text-2xl font-bold text-blue-600 mb-2">הציון שלך: ${state.masteryScore.toFixed(0)}%</h2>
+                        <div class="py-1 px-3 rounded-full inline-block ${isLocked?'bg-red-100 text-red-600':'bg-green-100 text-green-600'} font-bold text-sm">
+                            ${isLocked?'דרוש 70% לפתיחת המשחקים':'כל הכבוד! המשחקים פתוחים'}
                         </div>
                     </div>
-                    <button onclick="${isLocked?'':'startMemory()'}" class="p-7 bg-purple-500 text-white rounded-3xl text-2xl font-bold w-full shadow-lg transition-transform hover:scale-105 active:scale-95 ${isLocked?'opacity-50 grayscale':''}">משחק זיכרון 🧠 ${isLocked?'🔒':''}</button>
-                    <button onclick="${isLocked?'':'startC4()'}" class="p-7 bg-blue-500 text-white rounded-3xl text-2xl font-bold w-full shadow-lg transition-transform hover:scale-105 active:scale-95 ${isLocked?'opacity-50 grayscale':''}">4 בשורה 🔴🟡 ${isLocked?'🔒':''}</button>
+                    <button onclick="${isLocked?'':'startMemory()'}" class="p-5 bg-purple-500 text-white rounded-2xl text-xl font-bold w-full shadow-md active:scale-95 ${isLocked?'opacity-50 grayscale':''}">משחק זיכרון 🧠</button>
+                    <button onclick="${isLocked?'':'startC4()'}" class="p-5 bg-blue-500 text-white rounded-2xl text-xl font-bold w-full shadow-md active:scale-95 ${isLocked?'opacity-50 grayscale':''}">4 בשורה 🔴🟡</button>
                     
-                    <div class="flex flex-col gap-5 mt-8 border-t-2 border-blue-100 pt-6">
-                        <button onclick="state.words.forEach(w=>w.known=false); state.screen='flashcards'; render()" class="text-blue-600 font-bold text-lg underline">חזרה לתרגול המילים הקיימות</button>
-                        <button onclick="resetAllData()" class="text-red-500 font-bold text-lg underline">החלפת רשימת מילים / הזנה מחדש</button>
+                    <div class="flex flex-col gap-3 mt-4 border-t-2 border-blue-50 pt-4">
+                        <button onclick="state.words.forEach(w=>w.known=false); state.screen='flashcards'; render()" class="text-blue-600 font-bold text-sm underline">חזרה לתרגול</button>
+                        <button onclick="resetAllData()" class="text-red-500 font-bold text-sm underline">הזנת רשימה חדשה</button>
                     </div>
                 </div>`;
         }
 
         function startMemory() {
-            state.screen = 'memory';
-            state.winner = null;
+            state.screen = 'memory'; state.winner = null;
             const cards = [];
             state.words.slice(0, 8).forEach(w => {
                 cards.push({ t: w.eng, m: w.heb, isEng: true }, { t: w.heb, m: w.eng, isEng: false });
             });
-            state.memoryGame = { 
-                ...state.memoryGame,
-                cards: shuffle(cards).map((c, i) => ({ ...c, id: i, f: false, ok: false })), 
-                flipped: [], 
-                pairs: 0, 
-                steps: 0 
-            };
+            state.memoryGame = { ...state.memoryGame, cards: shuffle(cards).map((c, i) => ({ ...c, id: i, f: false, ok: false })), flipped: [], pairs: 0, steps: 0 };
             render();
-        }
-
-        function getFontSizeForMemory(text) {
-            const len = text.length;
-            if (len > 14) return '0.7rem';
-            if (len > 10) return '0.85rem';
-            if (len > 7) return '1rem';
-            return '1.2rem';
         }
 
         function renderMemory(app) {
             const g = state.memoryGame;
             app.innerHTML = `
                 <div class="flex flex-col items-center w-full px-2">
-                    <div class="flex justify-between items-center w-full max-w-sm mb-4 bg-white p-4 rounded-2xl border shadow-md">
-                        <button onclick="state.screen='menu'; render()" class="text-red-500 font-bold text-lg px-2">יציאה</button>
-                        <div class="flex flex-col items-center">
-                            <span class="text-xs text-gray-400 font-bold">צעדים</span>
-                            <span class="text-xl font-bold text-black">${g.steps}</span>
-                        </div>
-                        <div class="font-bold text-black text-lg">זוגות: ${g.pairs} / ${g.cards.length/2}</div>
+                    <div class="flex justify-between items-center w-full max-w-sm mb-3 bg-white p-3 rounded-xl border shadow-sm">
+                        <button onclick="state.screen='menu'; render()" class="text-red-500 font-bold text-sm">יציאה</button>
+                        <span class="text-sm font-bold text-black">צעדים: ${g.steps} | זוגות: ${g.pairs}</span>
                     </div>
                     <div class="grid grid-cols-4 gap-2 w-full max-w-sm">
                         ${g.cards.map(c => `
                             <div onclick="flipM(${c.id})" class="relative aspect-square perspective-1000 cursor-pointer ${c.f || c.ok ? 'card-flipped' : ''}">
                                 <div class="card-inner">
-                                    <div class="card-front bg-purple-600 text-white text-3xl font-bold shadow-inner">?</div>
+                                    <div class="card-front bg-purple-600 text-white text-2xl font-bold">?</div>
                                     <div class="card-back bg-white border-2 ${c.ok?'border-green-400 bg-green-50':'border-purple-200'}">
-                                        <div class="memory-text text-black font-bold ${c.isEng ? 'eng-text' : ''}" style="font-size: ${getFontSizeForMemory(c.t)}">${c.t}</div>
+                                        <div class="memory-text text-black font-bold text-xs ${c.isEng ? 'eng-text' : ''}">${c.t}</div>
                                     </div>
                                 </div>
                             </div>`).join('')}
                     </div>
-                    ${g.bestScore !== Infinity ? `<div class="mt-4 text-sm font-bold text-purple-600 bg-purple-50 px-4 py-1 rounded-full">שיא אישי: ${g.bestScore} צעדים</div>` : ''}
                 </div>`;
-
             if (g.pairs > 0 && g.pairs === g.cards.length/2) {
                 if (g.steps < g.bestScore) g.bestScore = g.steps;
-                setTimeout(() => { 
-                    triggerConfetti();
-                    state.winner = { 
-                        type: 'memory',
-                        msg: `ניצחת ב-${g.steps} צעדים!`,
-                        sub: "נראה לך שאפשר לפתור בפחות צעדים?",
-                        steps: g.steps,
-                        best: g.bestScore
-                    }; 
-                    render(); 
-                }, 600);
+                setTimeout(() => { triggerConfetti(); state.winner = { type: 'memory', msg: `ניצחת ב-${g.steps} צעדים!` }; render(); }, 600);
             }
         }
 
         function flipM(id) {
-            const g = state.memoryGame; 
-            const c = g.cards.find(x=>x.id===id);
+            const g = state.memoryGame; const c = g.cards.find(x=>x.id===id);
             if (c.f || c.ok || g.flipped.length === 2) return;
-            c.f = true; 
-            g.flipped.push(c); 
-            g.steps++; 
-            render();
+            c.f = true; g.flipped.push(c); g.steps++; render();
             if (g.flipped.length === 2) {
                 const [c1, c2] = g.flipped;
-                if (c1.t === c2.m) { 
-                    c1.ok = c2.ok = true; 
-                    g.pairs++; 
-                    g.flipped = []; 
-                    render(); 
-                } else { 
-                    setTimeout(() => { 
-                        c1.f = c2.f = false; 
-                        g.flipped = []; 
-                        render(); 
-                    }, 1000); 
-                }
+                if (c1.t === c2.m) { c1.ok = c2.ok = true; g.pairs++; g.flipped = []; render(); }
+                else { setTimeout(() => { c1.f = c2.f = false; g.flipped = []; render(); }, 1000); }
             }
         }
 
         function startC4() {
-            state.screen = 'connect4';
-            state.winner = null;
+            state.screen = 'connect4'; state.winner = null;
             state.connect4 = { board: Array(6).fill(null).map(() => Array(7).fill(null)), turn: 1, q: genC4Q(), canDrop: false, showQuestionPrompt: true };
             render();
         }
@@ -468,39 +342,31 @@
         function renderConnect4(app) {
             const c = state.connect4;
             app.innerHTML = `
-                <div class="flex flex-col items-center w-full px-2">
-                    <div class="w-full flex justify-between items-center mb-4 bg-white p-3 rounded-2xl border shadow-md max-w-sm">
-                        <button onclick="state.screen='menu'; render()" class="text-red-500 font-bold text-lg px-2">יציאה</button>
-                        <div class="font-bold text-black text-lg">תור: ${c.turn===1?'אדום 🔴':'צהוב 🟡'}</div>
+                <div class="flex flex-col items-center w-full px-1">
+                    <div class="w-full flex justify-between items-center mb-2 bg-white p-2 rounded-xl border shadow-sm max-w-sm">
+                        <button onclick="state.screen='menu'; render()" class="text-red-500 font-bold text-sm">יציאה</button>
+                        <div class="font-bold text-black text-sm">תור: ${c.turn===1?'אדום 🔴':'צהוב 🟡'}</div>
                     </div>
                     
-                    <div class="h-14 mb-2 flex items-center">
-                        ${c.showQuestionPrompt ? `<button onclick="state.connect4.showQuestionPrompt=false; render(); speak('${c.q.eng}')" class="bg-blue-600 text-white px-8 py-3 rounded-full text-xl font-bold shadow-lg transition-transform hover:scale-105 active:scale-95">הצג שאלה לאסימון</button>` : `<div class="text-blue-600 font-extrabold text-xl animate-pulse">בחר עמודה 👇</div>`}
+                    <div class="h-10 mb-2 flex items-center">
+                        ${c.showQuestionPrompt ? `<button onclick="state.connect4.showQuestionPrompt=false; render(); speak('${c.q.eng}')" class="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md">שאלה לאסימון</button>` : `<div class="text-blue-600 font-bold text-sm animate-pulse">בחר עמודה 👇</div>`}
                     </div>
 
                     <div class="c4-container">
                         <div class="arrows-row">
-                            ${[0,1,2,3,4,5,6].map(i => `
-                                <button onclick="dropC4(${i})" class="w-full text-center text-2xl ${!c.canDrop || c.board[0][i] ? 'opacity-10 pointer-events-none' : 'text-blue-500'}">👇</button>
-                            `).join('')}
+                            ${[0,1,2,3,4,5,6].map(i => `<button onclick="dropC4(${i})" class="w-full text-center text-xl ${!c.canDrop || c.board[0][i] ? 'opacity-10 pointer-events-none' : 'text-blue-500'}">👇</button>`).join('')}
                         </div>
-
                         <div class="c4-board">
-                            ${c.board.map((row, r) => row.map((cell, col) => `
-                                <div class="c4-slot">
-                                    ${cell ? `<div class="token-fixed ${cell===1?'bg-red-500':'bg-yellow-400'}"></div>` : ''}
-                                </div>
-                            `).join('')).join('')}
+                            ${c.board.map((row, r) => row.map((cell, col) => `<div class="c4-slot">${cell ? `<div class="token-fixed ${cell===1?'bg-red-500':'bg-yellow-400'}"></div>` : ''}</div>`).join('')).join('')}
                         </div>
                     </div>
 
                     ${!c.canDrop && !c.showQuestionPrompt ? `
-                        <div class="modal-overlay fixed inset-0 bg-black/80 flex items-center justify-center z-[200]">
-                            <div class="bg-white p-8 rounded-[2.5rem] max-w-xs w-full text-center mx-4 border-4 border-blue-500 shadow-2xl">
-                                <h2 class="text-xl mb-2 text-gray-500">מה התרגום של:</h2>
-                                <h3 class="text-4xl font-bold mb-8 text-blue-600 eng-text">${c.q.prompt}</h3>
-                                <div class="grid gap-3">
-                                    ${c.q.opts.map((o, idx) => `<button onclick="ansC4('${o}', ${idx})" class="p-4 border-2 rounded-2xl font-bold text-black hover:bg-blue-50 transition text-xl shadow-sm">${o}</button>`).join('')}
+                        <div class="modal-overlay fixed inset-0 bg-black/60 flex items-center justify-center z-[200]">
+                            <div class="bg-white p-6 rounded-[1.5rem] max-w-xs w-full text-center mx-4 border-2 border-blue-500 shadow-2xl">
+                                <h3 class="text-3xl font-bold mb-6 text-blue-600 eng-text">${c.q.prompt}</h3>
+                                <div class="grid gap-2">
+                                    ${c.q.opts.map(o => `<button onclick="ansC4('${o}')" class="p-3 border-2 rounded-xl font-bold text-black text-lg">${o}</button>`).join('')}
                                 </div>
                             </div>
                         </div>` : ''}
@@ -513,8 +379,7 @@
         }
 
         function dropC4(col) {
-            const c = state.connect4;
-            let rowIdx = -1;
+            const c = state.connect4; let rowIdx = -1;
             for (let r=5; r>=0; r--) { if (!c.board[r][col]) { rowIdx = r; break; } }
             if (rowIdx === -1) return;
             c.board[rowIdx][col] = c.turn;
@@ -534,20 +399,10 @@
         }
 
         function renderWinScreen(app) {
-            const isMemory = state.winner.type === 'memory';
             app.innerHTML = `
-                <div class="text-center p-10 bg-white rounded-[3rem] border-8 border-yellow-400 shadow-2xl mx-4 mt-12 max-w-sm w-full animate-fade-in">
-                    <h2 class="text-5xl font-extrabold mb-6 text-black">${state.winner.msg} 🎉</h2>
-                    
-                    ${isMemory ? `
-                        <p class="text-2xl mb-8 text-gray-700 font-bold">${state.winner.sub}</p>
-                        <div class="grid grid-cols-1 gap-4 mb-2">
-                            <button onclick="startMemory()" class="memory-action-btn bg-purple-600 text-white py-5 rounded-2xl font-bold shadow-lg text-xl transition-all active:scale-95">שחק שוב 🔄</button>
-                            <button onclick="state.winner=null; state.screen='menu'; render()" class="memory-action-btn bg-blue-600 text-white py-5 rounded-2xl font-bold shadow-lg text-xl transition-all active:scale-95">חזרה לתפריט 🏠</button>
-                        </div>
-                    ` : `
-                        <button onclick="state.winner=null; state.screen='menu'; render()" class="bg-blue-600 text-white py-5 rounded-2xl text-2xl font-bold w-full shadow-lg transition-all active:scale-95">חזרה לתפריט 🏠</button>
-                    `}
+                <div class="text-center p-8 bg-white rounded-[2rem] border-4 border-yellow-400 shadow-xl mx-4 mt-6 max-w-xs w-full animate-fade-in">
+                    <h2 class="text-3xl font-extrabold mb-4 text-black">${state.winner.msg} 🎉</h2>
+                    <button onclick="state.winner=null; state.screen='menu'; render()" class="bg-blue-600 text-white py-4 rounded-xl text-xl font-bold w-full shadow-md active:scale-95">חזרה לתפריט 🏠</button>
                 </div>`;
         }
 
